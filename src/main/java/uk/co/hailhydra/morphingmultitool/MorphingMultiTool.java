@@ -1,5 +1,6 @@
 package uk.co.hailhydra.morphingmultitool;
 
+import net.minecraft.creativetab.CreativeTabs;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -10,12 +11,16 @@ import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import uk.co.hailhydra.morphingmultitool.init.ModItems;
 import uk.co.hailhydra.morphingmultitool.proxy.ICommonProxy;
-import uk.co.hailhydra.morphing_multi_tool.Tags;
+import uk.co.hailhydra.morphingmultitool.Tags;
 
 @Mod(modid = Tags.MODID, version = Tags.VERSION, name = Tags.MODNAME, acceptedMinecraftVersions = "[1.12.2]")
 public class MorphingMultiTool {
 
+    public static final CreativeTabs MORPH_MULTI_TOOL_TAB = new MorphingMultiToolTab();
+
+    //TODO: find a better way of referencing the proxy classes without hardcoding location path
     @SidedProxy(
             clientSide = "uk.co.hailhydra.morphingmultitool.proxy.ClientProxy",
             serverSide = "uk.co.hailhydra.morphingmultitool.proxy.ServerProxy"
@@ -34,7 +39,8 @@ public class MorphingMultiTool {
     public void preInit(FMLPreInitializationEvent event) {
         // register to the event bus so that we can listen to events
         MinecraftForge.EVENT_BUS.register(this);
-        LOGGER.info("I am " + Tags.MODNAME + " at version " + Tags.VERSION);
+        LOGGER.info("My ID is " + Tags.MODID + " I am " + Tags.MODNAME + " at version " + Tags.VERSION);
+        ModItems.init();
     }
 
     @EventHandler
