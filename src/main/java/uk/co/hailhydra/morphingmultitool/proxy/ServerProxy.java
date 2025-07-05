@@ -1,16 +1,16 @@
 package uk.co.hailhydra.morphingmultitool.proxy;
 
-public class ServerProxy implements ICommonProxy{
+public class ServerProxy extends CommonProxy {
 
     ServerProxy(){}
 
-    @Override
+/*    @Override
     public void preInit() {
+        super.preInit();
+    }*/
 
-    }
-
-    @Override
+/*    @Override
     public void init() {
 
-    }
+    }*/
 }

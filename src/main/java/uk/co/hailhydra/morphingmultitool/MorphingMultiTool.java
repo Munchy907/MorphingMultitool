@@ -12,8 +12,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uk.co.hailhydra.morphingmultitool.init.ModItems;
-import uk.co.hailhydra.morphingmultitool.proxy.ICommonProxy;
-import uk.co.hailhydra.morphingmultitool.Tags;
+import uk.co.hailhydra.morphingmultitool.proxy.CommonProxy;
 
 @Mod(modid = Tags.MODID, version = Tags.VERSION, name = Tags.MODNAME, acceptedMinecraftVersions = "[1.12.2]")
 public class MorphingMultiTool {
@@ -25,7 +24,7 @@ public class MorphingMultiTool {
             clientSide = "uk.co.hailhydra.morphingmultitool.proxy.ClientProxy",
             serverSide = "uk.co.hailhydra.morphingmultitool.proxy.ServerProxy"
     )
-    public static ICommonProxy proxy;
+    public static CommonProxy proxy;
 
     @Instance(Tags.MODID)
     public static MorphingMultiTool instance;
@@ -40,7 +39,7 @@ public class MorphingMultiTool {
         // register to the event bus so that we can listen to events
         MinecraftForge.EVENT_BUS.register(this);
         LOGGER.info("My ID is " + Tags.MODID + " I am " + Tags.MODNAME + " at version " + Tags.VERSION);
-        ModItems.init();
+        proxy.preInit();
     }
 
     @EventHandler
