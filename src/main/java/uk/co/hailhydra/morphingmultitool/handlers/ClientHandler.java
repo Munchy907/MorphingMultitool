@@ -31,6 +31,8 @@ public class ClientHandler {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onClientTick(TickEvent.ClientTickEvent event) {
         tickCounter += 1;
+
+        //TODO Remove tick counter on release
         if (event.phase == TickEvent.Phase.END && tickCounter >= 40){
             tickCounter = 0;
             EntityPlayerSP playerSP = Minecraft.getMinecraft().player;
