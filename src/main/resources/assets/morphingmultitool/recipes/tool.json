@@ -1,0 +1,34 @@
+{
+  "result": {
+    "item": "morphingmultitool:tool"
+  },
+  "pattern": [
+    "gdi",
+    "asa",
+    "asa"
+  ],
+  "type": "forge:ore_shaped",
+  "key": {
+    "s": {
+      "item": "minecraft:stick"
+    },
+    "i": {
+      "item": "minecraft:iron_ingot"
+    },
+    "d": {
+      "item": "minecraft:diamond"
+    },
+    "g": {
+      "item": "minecraft:gold_ingot"
+    },
+    "a": {
+      "item": "minecraft:air"
+    }
+  },
+  "conditions": [
+    {
+      "type": "minecraft:item_exists",
+      "item": "morphingmultitool:tool"
+    }
+  ]
+}
