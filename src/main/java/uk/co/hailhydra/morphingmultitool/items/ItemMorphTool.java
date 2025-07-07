@@ -1,20 +1,18 @@
 package uk.co.hailhydra.morphingmultitool.items;
 
-import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
+import net.minecraft.nbt.*;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
-import org.jetbrains.annotations.Nullable;
+import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
 import uk.co.hailhydra.morphingmultitool.handlers.MorphHandler;
 import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
-import uk.co.hailhydra.morphingmultitool.utility.NBTHelper;
 
-import java.util.List;
+import java.util.Set;
 
 public class ItemMorphTool extends ItemModBase {
     public ItemMorphTool() {
@@ -27,12 +25,36 @@ public class ItemMorphTool extends ItemModBase {
         super.onCreated(stack, worldIn, playerIn);
     }
 
-    public static void addTool(ItemStack morphTool, ItemStack toAddStack, String toolClass){
+    public void addTool(ItemStack morphTool, ItemStack toAddStack, Set<String> toolClasses){
         //NBTTagCompound morphNBTData = NBTHelper.getOrCreateStackTagCompound(morphTool);
         //Statement should never be true
-        if (NBTHelper.getOrCreateStackTagCompound(morphTool) == null){return;}
 
-        if (NBTHelper.getOrCreateStackTagCompound(morphTool).hasKey(MorphToolResources.TAG_MMT_DATA)){return;}
+        if (morphTool.isEmpty() || toAddStack.isEmpty() || toolClasses.isEmpty()){return;}
+
+        if (morphTool.getTagCompound() == null){
+            NBTTagCompound tagStack = MorphHandler.createNBTData(morphTool);
+            NBTTagCompound tagMorphData = tagStack.getCompoundTag(MorphToolResources.TAG_MMT_DATA);
+            NBTTagList tagTools = tagMorphData.getTagList(MorphToolResources.TAG_MMT_TOOLS, Constants.NBT.TAG_COMPOUND);
+            NBTTagList tagToolClass = tagMorphData.getTagList(MorphToolResources.TAG_MMT_LIST_NBT_TOOL_CLASSES, Constants.NBT.TAG_STRING);
+            tagToolClass.appendTag(new NBTTagString(toolClasses.iterator().next()));
+            NBTTagCompound tagToolData = new NBTTagCompound();
+            ResourceLocation toolResource = Item.REGISTRY.getNameForObject(toAddStack.getItem());
+            if (toolResource == null){return;}
+            tagToolData.setTag("Slot", new NBTTagByte((byte) 0));
+            tagToolData.setTag("id", new NBTTagString(toolResource.toString()));
+            tagToolData.setTag("tool_class", new NBTTagString(toolClasses.iterator().next()));
+            tagToolData.setTag("Count", new NBTTagByte((byte) 1));
+            tagToolData.setTag("Damage", new NBTTagShort((short) toAddStack.getItemDamage()));
+            tagTools.appendTag(tagToolData);
+            MorphingMultiTool.LOGGER.info(tagTools.tagCount());
+            //tagMorphData.setTag(toAddStack.getDisplayName(), NBTHelper.getOrCreateStackTagCompound(toAddStack));
+            toAddStack.shrink(1);
+            return;
+        }
+
+        return;
+
+/*        if (NBTHelper.getOrCreateStackTagCompound(morphTool).hasKey(MorphToolResources.TAG_MMT_DATA)){return;}
 
         if (!NBTHelper.hasTag(morphTool, MorphToolResources.TAG_MMT_LIST_NBT_TOOL_CLASSES)){
             NBTHelper.setTagList(morphTool, MorphToolResources.TAG_MMT_LIST_NBT_TOOL_CLASSES, new NBTTagList());
@@ -48,11 +70,11 @@ public class ItemMorphTool extends ItemModBase {
         //ItemStack test = new ItemStack()
         //toAddStackNBT.setString();
 
-        NBTHelper.setTagCompound(morphTool, "MMT" + toolClass, NBTHelper.getOrCreateStackTagCompound(toAddStack));
+        NBTHelper.setTagCompound(morphTool, "MMT" + toolClass, NBTHelper.getOrCreateStackTagCompound(toAddStack));*/
 
     }
 
-    public static ItemStack removeTool(ItemStack morphTool, int itemPos){
+    public ItemStack removeTool(ItemStack morphTool, int itemPos){
         return new ItemStack(Items.AIR);
     }
 

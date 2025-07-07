@@ -16,13 +16,13 @@ public class ClientProxy extends CommonProxy {
     @Override
     public void preInit() {
         super.preInit();
-        MinecraftForge.EVENT_BUS.register(ClientHandler.INSTANCE);
+        //MinecraftForge.EVENT_BUS.register(ClientHandler.INSTANCE);
     }
 
-/*    @Override
+    @Override
     public void init() {
-
-    }*/
+        MinecraftForge.EVENT_BUS.register(ClientHandler.INSTANCE);
+    }
 
     @SubscribeEvent
     public static void registerModels(ModelRegistryEvent event){

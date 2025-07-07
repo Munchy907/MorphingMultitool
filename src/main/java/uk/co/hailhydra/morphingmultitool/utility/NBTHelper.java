@@ -87,16 +87,16 @@ public class NBTHelper {
         return tagCompound.getTagList(keyName, type);
     }
 
-    public static boolean tagListContainsString(NBTTagList tagList, String searchKey){
-        if (tagList.isEmpty()){return false;}
-        if (tagList.getTagType() != Constants.NBT.TAG_STRING){return false;}
+    public static int tagListContainsString(NBTTagList tagList, String searchKey){
+        if (tagList.isEmpty()){return -1;}
+        if (tagList.getTagType() != Constants.NBT.TAG_STRING){return -1;}
 
         for (int count = 0; count < tagList.tagCount(); count++) {
             if (tagList.getStringTagAt(count).equals(searchKey)){
-                return true;
+                return count;
             }
         }
 
-        return false;
+        return -1;
     }
 }

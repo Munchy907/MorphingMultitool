@@ -45,6 +45,7 @@ public class MorphingMultiTool {
     @EventHandler
     // load "Do your mod setup. Build whatever data structures you care about." (Remove if not needed)
     public void init(FMLInitializationEvent event) {
+        proxy.init();
     }
 
     @EventHandler
