@@ -15,28 +15,28 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemTool;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagShort;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 import net.minecraftforge.client.event.GuiScreenEvent;
-import net.minecraftforge.common.IShearable;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.InputEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Mouse;
 import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
-import uk.co.hailhydra.morphingmultitool.init.ModItems;
 import uk.co.hailhydra.morphingmultitool.items.ItemMorphTool;
 import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
 import uk.co.hailhydra.morphingmultitool.utility.MouseInputType;
 import uk.co.hailhydra.morphingmultitool.utility.NBTHelper;
+import uk.co.hailhydra.morphingmultitool.utility.ToolType;
 
-import java.util.Objects;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 @SideOnly(Side.CLIENT)
@@ -56,6 +56,7 @@ public class ClientHandler {
             tickCounter = 0;
             EntityPlayerSP playerSP = Minecraft.getMinecraft().player;
             if (Minecraft.getMinecraft().isGamePaused() || playerSP == null || playerSP.world == null){return;}
+            World world = playerSP.world;
 
 /*            if (!playerSP.getHeldItemMainhand().isEmpty()){
                 MorphingMultiTool.LOGGER.info(playerSP.getHeldItemMainhand().getItem().getToolClasses(playerSP.getHeldItemMainhand()));
@@ -74,15 +75,24 @@ public class ClientHandler {
 
             if (rayResult == null || rayResult.typeOfHit != RayTraceResult.Type.BLOCK){return;}
 
-            IBlockState blockState = playerSP.world.getBlockState(rayResult.getBlockPos());
+            BlockPos blockPos = rayResult.getBlockPos();
+            IBlockState blockState = playerSP.world.getBlockState(blockPos);
             Block targetBlock = blockState.getBlock();
-            String toolName = targetBlock.getHarvestTool(blockState);
+            //if (targetBlock.canHarvestBlock(world, blockPos, playerSP)){return;}
 
-            if (targetBlock instanceof IShearable){
-                toolName = new ItemStack(Items.SHEARS).getDisplayName().toLowerCase();
+            String toolName = getHarvestTool(world, blockState, targetBlock, blockPos);
+            if (toolName == null){return;}
+
+            if (morphTool.getItem().getToolClasses(morphTool).contains(toolName)){
+                //MorphingMultiTool.LOGGER.info("Tool class & tool name the same");
+                return;
             }
 
-            if (toolName == null){
+/*          if (targetBlock instanceof IShearable){
+                toolName = new ItemStack(Items.SHEARS).getDisplayName().toLowerCase();
+            }*/
+
+/*            if (toolName == null){
                 MorphingMultiTool.LOGGER.warn("Tool Name was null");
 
                 NBTTagCompound tagStack = morphTool.getTagCompound();
@@ -106,9 +116,7 @@ public class ClientHandler {
                 swapTool.setTagCompound(tagStack);
                 playerSP.setHeldItem(EnumHand.MAIN_HAND, swapTool);
                 return;
-            }
-
-            if (morphTool.getItem().getToolClasses(morphTool).contains(toolName)){return;}
+            }*/
 
             NBTTagCompound tagStack = morphTool.getTagCompound();
             if (tagStack == null || !tagStack.hasKey(MorphToolResources.TAG_MMT_DATA)){
@@ -197,6 +205,41 @@ public class ClientHandler {
         Vec3d endVec = startVec.add(lookVec.normalize().scale(rayLength));
 
         return entity.world.rayTraceBlocks(startVec, endVec);
+    }
+
+    private static final Map<String, ItemStack> testTools = new HashMap<>();
+    static {
+        testTools.put(ToolType.SHOVEL, new ItemStack(Items.WOODEN_SHOVEL));
+        testTools.put(ToolType.PICKAXE, new ItemStack(Items.WOODEN_PICKAXE));
+        testTools.put(ToolType.AXE, new ItemStack(Items.WOODEN_AXE));
+    }
+
+    public static String getHarvestTool(World world, IBlockState blockState, Block block, BlockPos blockPos){
+        String harvestTool = block.getHarvestTool(blockState);
+        MorphingMultiTool.LOGGER.info("H tool Name: " + harvestTool);
+        if (harvestTool != null){
+            //TODO: Config option if should swap if tool harvest level >= block hardness
+            return harvestTool;
+        }
+
+        // The block doesn't have an explicitly-set harvest tool, so we're going to test our wooden tools against the block.
+        float blockHardness = blockState.getBlockHardness(world, blockPos);
+        if (blockHardness >= 0f){
+            for (Map.Entry<String, ItemStack> testToolEntry : testTools.entrySet()){
+                // loop through our test tools until we find a winner.
+                ItemStack testTool = testToolEntry.getValue();
+
+                if (testTool != null && testTool.getItem() instanceof ItemTool toolItem){
+                    if (testTool.getDestroySpeed(blockState) >= toolItem.toolMaterial.getEfficiency()){
+                        //BINGO
+                        harvestTool = testToolEntry.getKey();
+                        return harvestTool;
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
 }
