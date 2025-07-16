@@ -30,6 +30,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Mouse;
 import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
 import uk.co.hailhydra.morphingmultitool.items.ItemMorphTool;
+import uk.co.hailhydra.morphingmultitool.network.NetworkHandler;
+import uk.co.hailhydra.morphingmultitool.network.NetworkMessage;
+import uk.co.hailhydra.morphingmultitool.network.packet.PacketToolAdded;
 import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
 import uk.co.hailhydra.morphingmultitool.utility.MouseInputType;
 import uk.co.hailhydra.morphingmultitool.utility.NBTHelper;
@@ -128,6 +131,7 @@ public class ClientHandler {
             NBTTagCompound tagMorphData = tagStack.getCompoundTag(MorphToolResources.TAG_MMT_DATA);
             if (!tagMorphData.hasKey(MorphToolResources.TAG_MMT_TOOLS)){
                 MorphingMultiTool.LOGGER.warn("Tool has Morph Data but not Tools Data! How?!");
+                return;
             }
 
             MorphingMultiTool.LOGGER.info("Has MMT_TOOLS");
@@ -149,9 +153,10 @@ public class ClientHandler {
             ItemStack pickedTool = new ItemStack(hold);
             MorphingMultiTool.LOGGER.info(pickedTool);
             pickedTool.setTagCompound(tagStack);
-            MorphingMultiTool.LOGGER.info(pickedTool);
+            MorphingMultiTool.LOGGER.info("Picked tool: " + pickedTool);
             playerSP.setHeldItem(EnumHand.MAIN_HAND, pickedTool);
-            MorphingMultiTool.LOGGER.info(toolName);
+            MorphingMultiTool.LOGGER.info("Tool name: " + toolName);
+            NetworkHandler.INSTANCE.sendToServer(new NetworkMessage(tagStack, toolName));
         }
     }
 
@@ -188,6 +193,11 @@ public class ClientHandler {
                     if (toolClass.isEmpty()){return;}
 
                     ((ItemMorphTool) carriedStack.getItem()).addTool(carriedStack, slotStack, toolClass);
+                    NBTTagCompound stackTag = carriedStack.getTagCompound();
+                    if (stackTag != null){
+                        MorphingMultiTool.LOGGER.info("the stacks tag is not null");
+                        NetworkHandler.INSTANCE.sendToServer(new PacketToolAdded(invSlot.slotNumber, stackTag));
+                    }
                     mouseEvent.setCanceled(true);
                     cancelButton = true;
                 }
