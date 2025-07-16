@@ -4,10 +4,10 @@ public class ServerProxy extends CommonProxy {
 
     ServerProxy(){}
 
-/*    @Override
+    @Override
     public void preInit() {
         super.preInit();
-    }*/
+    }
 
 /*    @Override
     public void init() {
