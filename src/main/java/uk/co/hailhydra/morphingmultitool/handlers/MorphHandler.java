@@ -33,10 +33,6 @@ public class MorphHandler {
 
         tagMorphTool.setTag(MorphToolResources.TAG_MMT_DATA, new NBTTagCompound());
 
-/*        NBTTagCompound tagMorphData = tagMorphTool.getCompoundTag(MorphToolResources.TAG_MMT_DATA);
-        tagMorphData.setTag(MorphToolResources.TAG_MMT_TOOLS, new NBTTagList());
-        tagMorphData.setTag(MorphToolResources.TAG_MMT_LIST_NBT_TOOL_CLASSES, new NBTTagList());*/
-
         return tagMorphTool;
     }
 
@@ -55,23 +51,6 @@ public class MorphHandler {
         }
 
         return emptyStack;
-
-        /*if (!morphData.hasKey(MorphToolResources.TAG_MMT_TOOLS)){
-            MorphingMultiTool.LOGGER.warn("Tool has Morph Data but not Tools Data! How?!");
-            return emptyStack;
-        }
-
-        NBTTagList tagToolsData = morphData.getTagList(MorphToolResources.TAG_MMT_TOOLS, Constants.NBT.TAG_COMPOUND);
-        if (tagToolsData.isEmpty()){return emptyStack;}
-
-        NBTTagList tagToolClasses = morphData.getTagList(MorphToolResources.TAG_MMT_LIST_NBT_TOOL_CLASSES, Constants.NBT.TAG_STRING);
-        int toolPos = NBTHelper.tagListContainsString(tagToolClasses, toolClass);
-        if (toolPos == -1){return emptyStack;}
-
-        //TODO: update code to not be temp and work for more than 1 tool
-
-        NBTTagCompound hold = tagToolsData.getCompoundTagAt(0);
-        return new ItemStack(hold);*/
     }
 
     public static boolean isValidMorphDataNBT(NBTTagCompound tagMorphData){
@@ -92,7 +71,6 @@ public class MorphHandler {
         if (!tagToolData.hasKey(tagToolDataKeys[0], Constants.NBT.TAG_STRING)){return false;}
         else if (!tagToolData.hasKey(tagToolDataKeys[1], Constants.NBT.TAG_BYTE)){return false;}
         else return tagToolData.hasKey(tagToolDataKeys[2], Constants.NBT.TAG_SHORT);
-
     }
 
 }
