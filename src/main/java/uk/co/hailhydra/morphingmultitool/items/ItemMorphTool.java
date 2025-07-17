@@ -8,11 +8,8 @@ import net.minecraft.nbt.*;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
-import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
 import uk.co.hailhydra.morphingmultitool.handlers.MorphHandler;
 import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
-
-import java.util.Set;
 
 public class ItemMorphTool extends ItemModBase {
     public ItemMorphTool() {
@@ -25,34 +22,32 @@ public class ItemMorphTool extends ItemModBase {
         super.onCreated(stack, worldIn, playerIn);
     }
 
-    public void addTool(ItemStack morphTool, ItemStack toAddStack, Set<String> toolClasses){
-        //NBTTagCompound morphNBTData = NBTHelper.getOrCreateStackTagCompound(morphTool);
-        //Statement should never be true
+    public boolean addTool(ItemStack morphTool, ItemStack toAddStack, String toolClass){
+        if (morphTool.isEmpty() || toAddStack.isEmpty() || toolClass.isEmpty()){return false;}
 
-        if (morphTool.isEmpty() || toAddStack.isEmpty() || toolClasses.isEmpty()){return;}
+        NBTTagCompound tagStack = morphTool.getTagCompound();
 
-        if (morphTool.getTagCompound() == null){
-            NBTTagCompound tagStack = MorphHandler.createNBTData(morphTool);
-            NBTTagCompound tagMorphData = tagStack.getCompoundTag(MorphToolResources.TAG_MMT_DATA);
-            NBTTagList tagTools = tagMorphData.getTagList(MorphToolResources.TAG_MMT_TOOLS, Constants.NBT.TAG_COMPOUND);
-            NBTTagList tagToolClass = tagMorphData.getTagList(MorphToolResources.TAG_MMT_LIST_NBT_TOOL_CLASSES, Constants.NBT.TAG_STRING);
-            tagToolClass.appendTag(new NBTTagString(toolClasses.iterator().next()));
-            NBTTagCompound tagToolData = new NBTTagCompound();
-            ResourceLocation toolResource = Item.REGISTRY.getNameForObject(toAddStack.getItem());
-            if (toolResource == null){return;}
-            tagToolData.setTag("Slot", new NBTTagByte((byte) 0));
-            tagToolData.setTag("id", new NBTTagString(toolResource.toString()));
-            tagToolData.setTag("tool_class", new NBTTagString(toolClasses.iterator().next()));
-            tagToolData.setTag("Count", new NBTTagByte((byte) 1));
-            tagToolData.setTag("Damage", new NBTTagShort((short) toAddStack.getItemDamage()));
-            tagTools.appendTag(tagToolData);
-            MorphingMultiTool.LOGGER.info(tagTools.tagCount());
-            //tagMorphData.setTag(toAddStack.getDisplayName(), NBTHelper.getOrCreateStackTagCompound(toAddStack));
-            toAddStack.shrink(1);
-            return;
+        if (tagStack == null || !tagStack.hasKey(MorphToolResources.TAG_MMT_DATA)){
+            tagStack = MorphHandler.createNBTData(morphTool);
         }
 
-        return;
+        NBTTagCompound tagMorphData = tagStack.getCompoundTag(MorphToolResources.TAG_MMT_DATA);
+        if (tagMorphData.hasKey(toolClass, Constants.NBT.TAG_COMPOUND)){return false;}
+        NBTTagCompound tagToolData = new NBTTagCompound();
+
+        ResourceLocation toolResource = Item.REGISTRY.getNameForObject(toAddStack.getItem());
+        if (toolResource == null){return false;}
+
+        //Don't know what this is/was for
+        //tagToolData.setTag("Slot", new NBTTagByte((byte) 0));
+
+        tagToolData.setString("id", toolResource.toString());
+        tagToolData.setByte("Count", (byte) 1) ;
+        tagToolData.setShort("Damage", (short) toAddStack.getItemDamage());
+
+        tagMorphData.setTag(toolClass, tagToolData);
+        toAddStack.shrink(1);
+        return true;
 
 /*        if (NBTHelper.getOrCreateStackTagCompound(morphTool).hasKey(MorphToolResources.TAG_MMT_DATA)){return;}
 
