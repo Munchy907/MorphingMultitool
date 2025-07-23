@@ -29,6 +29,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Mouse;
 import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
+import uk.co.hailhydra.morphingmultitool.init.ModItems;
 import uk.co.hailhydra.morphingmultitool.items.ItemMorphTool;
 import uk.co.hailhydra.morphingmultitool.network.NetworkHandler;
 import uk.co.hailhydra.morphingmultitool.network.NetworkMessage;
@@ -226,6 +227,18 @@ public class ClientHandler {
                 }
             }
 
+        }
+    }
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onItemPickup(GuiScreenEvent.MouseInputEvent.Post mouseEvent){
+        if (!mouseEvent.isCanceled() && mouseEvent.getGui() instanceof GuiContainer guiContainer && Mouse.getEventButton() == MouseInputType.LEFT){
+            EntityPlayerSP playerSP = Minecraft.getMinecraft().player;
+            ItemStack mouseStack = playerSP.inventory.getItemStack();
+            if (!mouseStack.isEmpty() && MorphHandler.isMorphingTool(mouseStack)){
+               ItemStack morphTool = new ItemStack(ModItems.MORPHING_MULTI_TOOL);
+               morphTool.setTagCompound(mouseStack.getTagCompound());
+               playerSP.inventory.setItemStack(morphTool);
+            }
         }
     }
 
