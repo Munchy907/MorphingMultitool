@@ -10,18 +10,14 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.Slot;
 import net.minecraft.inventory.SlotCrafting;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemTool;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.GuiScreenEvent;
-import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -32,7 +28,7 @@ import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
 import uk.co.hailhydra.morphingmultitool.init.ModItems;
 import uk.co.hailhydra.morphingmultitool.items.ItemMorphTool;
 import uk.co.hailhydra.morphingmultitool.network.NetworkHandler;
-import uk.co.hailhydra.morphingmultitool.network.NetworkMessage;
+import uk.co.hailhydra.morphingmultitool.network.packet.PacketMorphToTool;
 import uk.co.hailhydra.morphingmultitool.network.packet.PacketRemoveTool;
 import uk.co.hailhydra.morphingmultitool.network.packet.PacketToolAdded;
 import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
@@ -136,9 +132,9 @@ public class ClientHandler {
             ItemStack tool = MorphHandler.getItemFromToolClass(tagMorphData, toolName);
             if (tool.isEmpty()){return;}
 
-            tool.setTagCompound(tagStack);
-            playerSP.setHeldItem(EnumHand.MAIN_HAND, tool);
-            NetworkHandler.INSTANCE.sendToServer(new NetworkMessage(tagStack, toolName));
+            //tool.setTagCompound(tagStack);
+            //playerSP.setHeldItem(EnumHand.MAIN_HAND, tool);
+            NetworkHandler.INSTANCE.sendToServer(new PacketMorphToTool(tagStack, toolName));
             //ItemStack tool = new ItemStack()
 
 

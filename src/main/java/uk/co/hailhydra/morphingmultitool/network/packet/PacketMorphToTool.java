@@ -1,4 +1,4 @@
-package uk.co.hailhydra.morphingmultitool.network;
+package uk.co.hailhydra.morphingmultitool.network.packet;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -9,19 +9,18 @@ import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
 import uk.co.hailhydra.morphingmultitool.handlers.MorphHandler;
 import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
 import uk.co.hailhydra.morphingmultitool.utility.ToolType;
 
-public class NetworkMessage implements IMessage {
+public class PacketMorphToTool implements IMessage {
 
     // A default constructor is always required
-    public NetworkMessage(){}
+    public PacketMorphToTool(){}
 
     private NBTTagCompound stackTag;
     private String toolClass = ToolType.NONE;
-    public NetworkMessage(NBTTagCompound stackTag, String toolClass){
+    public PacketMorphToTool(NBTTagCompound stackTag, String toolClass){
         this.stackTag = stackTag;
         this.toolClass = toolClass;
     }
@@ -48,10 +47,10 @@ public class NetworkMessage implements IMessage {
         ByteBufUtils.writeTag(buf, tagCompound);
     }
 
-    public static class NetworkMessageHandler implements IMessageHandler<NetworkMessage, IMessage> {
+    public static class PacketMorphToToolHandler implements IMessageHandler<PacketMorphToTool, IMessage> {
 
         @Override
-        public IMessage onMessage(NetworkMessage message, MessageContext ctx) {
+        public IMessage onMessage(PacketMorphToTool message, MessageContext ctx) {
             if (ctx.side.isServer()){
                 EntityPlayerMP serverPlayer = ctx.getServerHandler().player;
                 NBTTagCompound updatedTag = message.stackTag;
@@ -67,7 +66,6 @@ public class NetworkMessage implements IMessage {
                         if (tool.isEmpty()){return;}
 
                         tool.setTagCompound(updatedTag);
-                        MorphingMultiTool.LOGGER.info("new tool: " + tool.getDisplayName());
                         serverPlayer.setHeldItem(EnumHand.MAIN_HAND, tool);
                         //serverPlayer.inventory.markDirty();
                     }
