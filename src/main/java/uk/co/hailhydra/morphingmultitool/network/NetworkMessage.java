@@ -69,7 +69,7 @@ public class NetworkMessage implements IMessage {
                         tool.setTagCompound(updatedTag);
                         MorphingMultiTool.LOGGER.info("new tool: " + tool.getDisplayName());
                         serverPlayer.setHeldItem(EnumHand.MAIN_HAND, tool);
-                        serverPlayer.inventory.markDirty();
+                        //serverPlayer.inventory.markDirty();
                     }
                 });
             }

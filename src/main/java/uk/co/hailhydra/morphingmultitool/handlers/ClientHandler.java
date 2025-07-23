@@ -32,10 +32,10 @@ import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
 import uk.co.hailhydra.morphingmultitool.items.ItemMorphTool;
 import uk.co.hailhydra.morphingmultitool.network.NetworkHandler;
 import uk.co.hailhydra.morphingmultitool.network.NetworkMessage;
+import uk.co.hailhydra.morphingmultitool.network.packet.PacketRemoveTool;
 import uk.co.hailhydra.morphingmultitool.network.packet.PacketToolAdded;
 import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
 import uk.co.hailhydra.morphingmultitool.utility.MouseInputType;
-import uk.co.hailhydra.morphingmultitool.utility.NBTHelper;
 import uk.co.hailhydra.morphingmultitool.utility.ToolType;
 
 import java.util.HashMap;
@@ -186,8 +186,8 @@ public class ClientHandler {
             EntityPlayerSP playerSP = Minecraft.getMinecraft().player;
             if (playerSP == null){return;}
 
-            ItemStack carriedStack = playerSP.inventory.getItemStack();
-            if (carriedStack.isEmpty()){return;}
+            ItemStack mouseStack = playerSP.inventory.getItemStack();
+            if (mouseStack.isEmpty()){return;}
 
             Slot invSlot = guiContainer.getSlotUnderMouse();
             if (invSlot == null){return;}
@@ -197,19 +197,29 @@ public class ClientHandler {
             if (!(invSlot instanceof SlotCrafting) && invSlot.isEnabled()){
                 //TODO: Network Shiz & removing tools
 
-                if (carriedStack.getItem() instanceof ItemMorphTool){
+                if (mouseStack.getItem() instanceof ItemMorphTool){
                     ItemStack slotStack = invSlot.getStack();
-                    //if (slotStack.isEmpty()){}
-                    Set<String> toolClass = slotStack.getItem().getToolClasses(slotStack);
-                    if (toolClass.isEmpty()){return;}
+                    if (slotStack.isEmpty()){
+                        if (MorphHandler.isMorphingTool(mouseStack)){
+                            if (mouseStack.getTagCompound() == null){return;}
+                            NBTTagCompound morphData = mouseStack.getTagCompound().getCompoundTag(MorphToolResources.TAG_MMT_DATA);
+                            if (morphData.isEmpty()){return;}
 
-                    //TODO: Have it check every tool class not just the first
-                    if (!((ItemMorphTool) carriedStack.getItem()).addTool(carriedStack, slotStack, toolClass.iterator().next())){return;}
+                            String toolClass = morphData.getKeySet().iterator().next();
+                            NetworkHandler.INSTANCE.sendToServer(new PacketRemoveTool(mouseStack, toolClass, invSlot.slotNumber));
 
-                    NBTTagCompound stackTag = carriedStack.getTagCompound();
-                    if (stackTag != null){
-                        MorphingMultiTool.LOGGER.info("the stacks tag is not null");
-                        NetworkHandler.INSTANCE.sendToServer(new PacketToolAdded(invSlot.slotNumber, stackTag));
+                            mouseEvent.setCanceled(true);
+                            cancelButton = true;
+                        }
+                    }
+                    else{
+                        Set<String> toolClass = slotStack.getItem().getToolClasses(slotStack);
+                        if (toolClass.isEmpty()){return;}
+
+                        //TODO: Have it check every tool class not just the first
+                        //if (!MorphHandler.addTool(mouseStack, slotStack, toolClass.iterator().next())){return;}
+
+                        NetworkHandler.INSTANCE.sendToServer(new PacketToolAdded(invSlot.slotNumber, mouseStack));
                         mouseEvent.setCanceled(true);
                         cancelButton = true;
                     }

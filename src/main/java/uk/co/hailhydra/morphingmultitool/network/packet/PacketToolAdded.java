@@ -2,15 +2,18 @@ package uk.co.hailhydra.morphingmultitool.network.packet;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.Item;
+import net.minecraft.inventory.Container;
+import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
 import uk.co.hailhydra.morphingmultitool.handlers.MorphHandler;
+import uk.co.hailhydra.morphingmultitool.items.ItemMorphTool;
+import uk.co.hailhydra.morphingmultitool.network.NetworkHandler;
+
+import java.util.Set;
 
 public class PacketToolAdded implements IMessage {
 
@@ -18,22 +21,22 @@ public class PacketToolAdded implements IMessage {
     public PacketToolAdded(){}
 
     private int toolSlot;
-    private NBTTagCompound tagCompound;
-    public PacketToolAdded(int toolSlot, NBTTagCompound tagCompound){
+    private ItemStack morphTool;
+    public PacketToolAdded(int toolSlot, ItemStack morphTool){
         this.toolSlot = toolSlot;
-        this.tagCompound = tagCompound;
+        this.morphTool = morphTool;
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
         toolSlot = buf.readInt();
-        tagCompound = ByteBufUtils.readTag(buf);
+        morphTool = ByteBufUtils.readItemStack(buf);
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
         buf.writeInt(toolSlot);
-        ByteBufUtils.writeTag(buf, tagCompound);
+        ByteBufUtils.writeItemStack(buf, morphTool);
     }
 
     public static class PacketToolAddedHandler implements IMessageHandler<PacketToolAdded, IMessage> {
@@ -41,17 +44,23 @@ public class PacketToolAdded implements IMessage {
         @Override
         public IMessage onMessage(PacketToolAdded message, MessageContext ctx) {
             if (ctx.side.isServer()){
-                MorphingMultiTool.LOGGER.info("PacketToolAddedHandler working?");
                 EntityPlayerMP serverPlayer = ctx.getServerHandler().player;
-                NBTTagCompound updatedTag = message.tagCompound;
                 serverPlayer.getServerWorld().addScheduledTask(() ->{
-                    ItemStack morphTool = serverPlayer.inventory.getItemStack();
-                    ItemStack toolToAdd = serverPlayer.inventory.getStackInSlot(message.toolSlot);
-                    if (MorphHandler.isMorphingTool(morphTool)){
-                        MorphingMultiTool.LOGGER.info("PacketToolAddedHandler working!");
-                        morphTool.setTagCompound(updatedTag);
-                        toolToAdd.shrink(1);
-                        serverPlayer.inventory.markDirty();
+
+                    ItemStack morphTool = message.morphTool;
+                    Container container = serverPlayer.openContainer;
+                    Slot slot = container.getSlot(message.toolSlot);
+                    ItemStack toolToAdd = slot.getStack();
+                    if (toolToAdd.isEmpty()){return;}
+
+                    if (morphTool.getItem() instanceof ItemMorphTool || MorphHandler.isMorphingTool(morphTool)){
+                        Set<String> toolClasses = toolToAdd.getItem().getToolClasses(toolToAdd);
+                        if (toolClasses.isEmpty()){return;}
+
+                        if (!MorphHandler.addTool(morphTool, toolToAdd, toolToAdd.getItem().getToolClasses(toolToAdd).iterator().next())){return;}
+
+                        serverPlayer.inventory.setItemStack(morphTool);
+                        NetworkHandler.INSTANCE.sendTo(new PacketUpdateMouseStack(morphTool), serverPlayer) ;
                     }
                 });
             }
