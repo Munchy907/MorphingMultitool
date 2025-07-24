@@ -9,6 +9,7 @@ import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import uk.co.hailhydra.morphingmultitool.handlers.MorphHandler;
 
 public class PacketUpdateMouseStack implements IMessage {
     // A default constructor & being public is always required
@@ -44,7 +45,9 @@ public class PacketUpdateMouseStack implements IMessage {
             else if (ctx.side.isServer()) {
                 EntityPlayerMP serverPlayer = ctx.getServerHandler().player;
                 serverPlayer.getServerWorld().addScheduledTask(() ->{
-                    serverPlayer.inventory.setItemStack(message.mouseStack);
+                    if (MorphHandler.isMorphingTool(message.mouseStack)){
+                        serverPlayer.inventory.setItemStack(message.mouseStack);
+                    }
                 });
             }
             return null;
