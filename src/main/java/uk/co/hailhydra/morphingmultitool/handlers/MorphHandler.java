@@ -18,6 +18,7 @@ public class MorphHandler {
     private static final String TOOL_DATA_ID = "id";
     private static final String TOOL_DATA_COUNT = "Count";
     private static final String TOOL_DATA_DAMAGE = "Damage";
+    private static final String TOOL_DATA_POSITION = "pos";
     //private static final String TOOL_DATA_CLASS = "Class";
 
     public static Boolean isMorphingTool(ItemStack stack){
@@ -83,6 +84,7 @@ public class MorphHandler {
 
     private static boolean isValidToolDataNBT(NBTTagCompound tagToolData){
         if (!tagToolData.hasKey(TOOL_DATA_ID, Constants.NBT.TAG_STRING)){return false;}
+        else if (!tagToolData.hasKey(TOOL_DATA_POSITION, Constants.NBT.TAG_BYTE)){return false;}
         else return tagToolData.hasKey(TOOL_DATA_COUNT, Constants.NBT.TAG_BYTE);
         //else return tagToolData.hasKey(tagToolDataKeys[2], Constants.NBT.TAG_SHORT);
     }
@@ -106,23 +108,36 @@ public class MorphHandler {
         //Don't know what this is/was for
         //tagToolData.setTag("Slot", new NBTTagByte((byte) 0));
 
-        NBTTagCompound tagToolData = createNBTToolData(toolResource.toString(), (short) toAddStack.getItemDamage());
+        NBTTagCompound tagToolData = createNBTToolData(toolResource.toString(), getNextPos(tagMorphData), (short) toAddStack.getItemDamage());
 
         tagMorphData.setTag(toolClass, tagToolData);
         toAddStack.shrink(1);
         return true;
     }
 
-    private static NBTTagCompound createNBTToolData(String ID, short damage){
+    private static NBTTagCompound createNBTToolData(String ID, byte pos, short damage){
         NBTTagCompound tagToolData = new NBTTagCompound();
 
         tagToolData.setString(TOOL_DATA_ID, ID);
+        tagToolData.setByte(TOOL_DATA_POSITION, pos);
         //tagToolData.setString(TOOL_DATA_CLASS, toolClass);
         tagToolData.setByte(TOOL_DATA_COUNT, (byte) 1);
         if (damage <= 0){return tagToolData;}
 
         tagToolData.setShort(TOOL_DATA_DAMAGE, (short) damage);
         return tagToolData;
+    }
+
+    private static byte getNextPos(NBTTagCompound tagMorphData){
+        byte lastPos = -1;
+
+        for (String toolDataKey: tagMorphData.getKeySet()) {
+            if (tagMorphData.hasKey(toolDataKey, Constants.NBT.TAG_COMPOUND)){
+                byte pos = tagMorphData.getCompoundTag(toolDataKey).getByte(TOOL_DATA_POSITION);
+                if (pos > lastPos){lastPos = pos;}
+            }
+        }
+        return ++lastPos;
     }
 
     public static ItemStack removeTool(ItemStack morphTool, String toolClass){
@@ -134,6 +149,28 @@ public class MorphHandler {
 
         morphTool.getTagCompound().getCompoundTag(MorphToolResources.TAG_MMT_DATA).removeTag(toolClass);
         return tool;
+    }
+
+    public static ItemStack removeTool(ItemStack morphTool){
+        if (!isMorphingTool(morphTool)){return ItemStack.EMPTY;}
+
+        assert morphTool.getTagCompound() != null;
+        NBTTagCompound tagMorphData = morphTool.getTagCompound().getCompoundTag(MorphToolResources.TAG_MMT_DATA);
+
+        byte lastPos = -1;
+        String toolClass = "";
+        for (String toolDataKey: tagMorphData.getKeySet()) {
+            if (tagMorphData.hasKey(toolDataKey, Constants.NBT.TAG_COMPOUND)){
+                byte pos = tagMorphData.getCompoundTag(toolDataKey).getByte(TOOL_DATA_POSITION);
+                if (pos > lastPos){
+                    lastPos = pos;
+                    toolClass = toolDataKey;
+                }
+            }
+        }
+
+        if (toolClass.isEmpty()){return ItemStack.EMPTY;}
+        else return removeTool(morphTool, toolClass);
     }
 
 

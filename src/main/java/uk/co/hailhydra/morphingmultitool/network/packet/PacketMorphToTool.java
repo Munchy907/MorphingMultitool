@@ -9,6 +9,7 @@ import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
 import uk.co.hailhydra.morphingmultitool.handlers.MorphHandler;
 import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
 import uk.co.hailhydra.morphingmultitool.utility.ToolType;
@@ -55,19 +56,32 @@ public class PacketMorphToTool implements IMessage {
                 EntityPlayerMP serverPlayer = ctx.getServerHandler().player;
                 NBTTagCompound updatedTag = message.stackTag;
                 serverPlayer.getServerWorld().addScheduledTask(() ->{
-                    if (updatedTag == null){return;}
+                    if (updatedTag == null){
+                        MorphingMultiTool.LOGGER.info("Updated Tag is null");
+                        return;}
+
+
 
                     NBTTagCompound morphData = updatedTag.getCompoundTag(MorphToolResources.TAG_MMT_DATA);
-                    if (morphData.isEmpty()){return;}
+                    if (morphData.isEmpty()){
+                        MorphingMultiTool.LOGGER.info("MorphData is empty");
+                        return;}
+
+
 
                     ItemStack morphTool = serverPlayer.getHeldItemMainhand();
                     if (MorphHandler.isMorphingTool(morphTool)){
                         ItemStack tool = MorphHandler.getItemFromToolClass(morphData, message.toolClass);
+                        MorphingMultiTool.LOGGER.info("Inside morph tool");
                         if (tool.isEmpty()){return;}
+
+                        MorphingMultiTool.LOGGER.info("Tool is not empty");
 
                         tool.setTagCompound(updatedTag);
                         serverPlayer.setHeldItem(EnumHand.MAIN_HAND, tool);
                         //serverPlayer.inventory.markDirty();
+                    }else {
+                        MorphingMultiTool.LOGGER.info("Isn't morphing tool");
                     }
                 });
             }

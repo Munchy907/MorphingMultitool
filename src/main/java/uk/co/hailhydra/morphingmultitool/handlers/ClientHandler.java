@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.Slot;
@@ -18,8 +19,11 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.GuiScreenEvent;
+import net.minecraftforge.event.entity.item.ItemTossEvent;
+import net.minecraftforge.event.entity.player.PlayerDropsEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -31,6 +35,7 @@ import uk.co.hailhydra.morphingmultitool.network.NetworkHandler;
 import uk.co.hailhydra.morphingmultitool.network.packet.PacketMorphToTool;
 import uk.co.hailhydra.morphingmultitool.network.packet.PacketRemoveTool;
 import uk.co.hailhydra.morphingmultitool.network.packet.PacketToolAdded;
+import uk.co.hailhydra.morphingmultitool.network.packet.PacketUpdateMouseStack;
 import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
 import uk.co.hailhydra.morphingmultitool.utility.MouseInputType;
 import uk.co.hailhydra.morphingmultitool.utility.ToolType;
@@ -55,7 +60,7 @@ public class ClientHandler {
         if (event.phase == TickEvent.Phase.END && tickCounter >= 40){
             tickCounter = 0;
             EntityPlayerSP playerSP = Minecraft.getMinecraft().player;
-            if (Minecraft.getMinecraft().isGamePaused() || playerSP == null || playerSP.world == null){return;}
+            if (Minecraft.getMinecraft().isGamePaused() || Minecraft.getMinecraft().currentScreen != null || playerSP == null || playerSP.world == null){return;}
             World world = playerSP.world;
 
 /*            if (!playerSP.getHeldItemMainhand().isEmpty()){
@@ -84,7 +89,7 @@ public class ClientHandler {
             if (toolName == null){return;}
 
             if (morphTool.getItem().getToolClasses(morphTool).contains(toolName)){
-                //MorphingMultiTool.LOGGER.info("Tool class & tool name the same");
+                MorphingMultiTool.LOGGER.info("Tool class & tool name the same");
                 return;
             }
 
@@ -131,6 +136,8 @@ public class ClientHandler {
 
             ItemStack tool = MorphHandler.getItemFromToolClass(tagMorphData, toolName);
             if (tool.isEmpty()){return;}
+
+            MorphingMultiTool.LOGGER.info("Sends packet to server the server");
 
             //tool.setTagCompound(tagStack);
             //playerSP.setHeldItem(EnumHand.MAIN_HAND, tool);
@@ -202,8 +209,9 @@ public class ClientHandler {
                             NBTTagCompound morphData = mouseStack.getTagCompound().getCompoundTag(MorphToolResources.TAG_MMT_DATA);
                             if (morphData.isEmpty()){return;}
 
-                            String toolClass = morphData.getKeySet().iterator().next();
-                            NetworkHandler.INSTANCE.sendToServer(new PacketRemoveTool(mouseStack, toolClass, invSlot.slotNumber));
+                            //String toolClass = morphData.getKeySet().iterator().next();
+                            //NetworkHandler.INSTANCE.sendToServer(new PacketRemoveTool(mouseStack, toolClass, invSlot.slotNumber));
+                            NetworkHandler.INSTANCE.sendToServer(new PacketRemoveTool(mouseStack, invSlot.slotNumber));
 
                             mouseEvent.setCanceled(true);
                             cancelButton = true;
@@ -226,7 +234,7 @@ public class ClientHandler {
         }
     }
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void onItemPickup(GuiScreenEvent.MouseInputEvent.Post mouseEvent){
+    public void onItemMousePickup(GuiScreenEvent.MouseInputEvent.Post mouseEvent){
         if (!mouseEvent.isCanceled() && mouseEvent.getGui() instanceof GuiContainer guiContainer && Mouse.getEventButton() == MouseInputType.LEFT){
             EntityPlayerSP playerSP = Minecraft.getMinecraft().player;
             ItemStack mouseStack = playerSP.inventory.getItemStack();
@@ -234,9 +242,31 @@ public class ClientHandler {
                ItemStack morphTool = new ItemStack(ModItems.MORPHING_MULTI_TOOL);
                morphTool.setTagCompound(mouseStack.getTagCompound());
                playerSP.inventory.setItemStack(morphTool);
+               NetworkHandler.INSTANCE.sendToServer(new PacketUpdateMouseStack(morphTool));
             }
         }
     }
+
+/*
+    @SubscribeEvent
+    public void onToolDrop(ItemTossEvent tossEvent){
+        if (tossEvent.getPlayer().isSneaking()){
+
+            ItemStack tool = tossEvent.getEntityItem().getItem();
+            if (MorphHandler.isMorphingTool(tool) && !(tool.getItem() instanceof ItemMorphTool)){
+                EntityItem droppedItem = tossEvent.getEntityItem();
+                if (droppedItem.getEntityWorld().isRemote){
+                    MorphingMultiTool.LOGGER.info("is Remote, what we doing chef?");
+                    droppedItem.setItem(MorphHandler.removeTool(tool, tool.getItem().getToolClasses(tool).iterator().next()));
+                }else {
+                    MorphingMultiTool.LOGGER.info("Not Remote, what we doing chef?");
+                    EntityItem newItem = new EntityItem(tossEvent.getEntityItem().getEntityWorld(), droppedItem.posX, droppedItem.posY, droppedItem.posZ, MorphHandler.removeTool(tool, tool.getItem().getToolClasses(tool).iterator().next()));
+                    droppedItem.getEntityWorld().spawnEntity(newItem);
+                }
+            }
+        }
+
+    }*/
 
     public static RayTraceResult raycast(Entity entity, double rayLength){
         Vec3d startVec = new Vec3d(entity.posX, entity.posY, entity.posZ);

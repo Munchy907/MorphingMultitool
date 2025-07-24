@@ -3,6 +3,7 @@ package uk.co.hailhydra.morphingmultitool.network.packet;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
@@ -38,6 +39,12 @@ public class PacketUpdateMouseStack implements IMessage {
                     if (playerSP != null){
                         playerSP.inventory.setItemStack(message.mouseStack);
                     }
+                });
+            }
+            else if (ctx.side.isServer()) {
+                EntityPlayerMP serverPlayer = ctx.getServerHandler().player;
+                serverPlayer.getServerWorld().addScheduledTask(() ->{
+                    serverPlayer.inventory.setItemStack(message.mouseStack);
                 });
             }
             return null;

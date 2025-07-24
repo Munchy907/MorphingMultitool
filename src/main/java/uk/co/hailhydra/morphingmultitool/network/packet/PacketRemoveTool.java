@@ -18,27 +18,27 @@ public class PacketRemoveTool implements IMessage {
     public PacketRemoveTool(){}
 
     private ItemStack morphTool;
-    private String toolClass;
+    //private String toolClass;
     private int emptySlotID;
 
 
-    public PacketRemoveTool(ItemStack morphTool, String toolClass, int emptySlotID){
+    public PacketRemoveTool(ItemStack morphTool, int emptySlotID){
         this.morphTool = morphTool;
-        this.toolClass = toolClass;
+        //this.toolClass = toolClass;
         this.emptySlotID = emptySlotID;
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
         morphTool = ByteBufUtils.readItemStack(buf);
-        toolClass = ByteBufUtils.readUTF8String(buf);
+        //toolClass = ByteBufUtils.readUTF8String(buf);
         emptySlotID = buf.readInt();
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
         ByteBufUtils.writeItemStack(buf, morphTool);
-        ByteBufUtils.writeUTF8String(buf, toolClass);
+        //ByteBufUtils.writeUTF8String(buf, toolClass);
         buf.writeInt(emptySlotID);
     }
 
@@ -55,7 +55,7 @@ public class PacketRemoveTool implements IMessage {
 
                     if (MorphHandler.isMorphingTool(message.morphTool)){
 
-                        ItemStack removedTool = MorphHandler.removeTool(message.morphTool, message.toolClass);
+                        ItemStack removedTool = MorphHandler.removeTool(message.morphTool);
 
                         if (removedTool.isEmpty()){
                             serverPlayer.inventory.setItemStack(ItemStack.EMPTY);
