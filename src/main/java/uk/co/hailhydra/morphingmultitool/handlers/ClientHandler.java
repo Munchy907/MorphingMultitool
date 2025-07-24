@@ -7,7 +7,6 @@ import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiContainerCreative;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.Slot;
@@ -15,24 +14,17 @@ import net.minecraft.inventory.SlotCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemTool;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.GuiScreenEvent;
-import net.minecraftforge.common.util.Constants;
-import net.minecraftforge.event.entity.item.ItemTossEvent;
-import net.minecraftforge.event.entity.player.PlayerDropsEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
-import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
 import uk.co.hailhydra.morphingmultitool.init.ModItems;
 import uk.co.hailhydra.morphingmultitool.items.ItemMorphTool;
 import uk.co.hailhydra.morphingmultitool.network.NetworkHandler;
@@ -64,10 +56,6 @@ public class ClientHandler {
             if (Minecraft.getMinecraft().isGamePaused() || Minecraft.getMinecraft().currentScreen != null || playerSP == null || playerSP.world == null){return;}
             World world = playerSP.world;
 
-/*            if (!playerSP.getHeldItemMainhand().isEmpty()){
-                MorphingMultiTool.LOGGER.info(playerSP.getHeldItemMainhand().getItem().getToolClasses(playerSP.getHeldItemMainhand()));
-            }*/
-
             if (!MorphHandler.isMorphingTool(playerSP.getHeldItemMainhand())){return;}
 
             ItemStack morphTool = playerSP.getHeldItemMainhand();
@@ -84,55 +72,23 @@ public class ClientHandler {
             BlockPos blockPos = rayResult.getBlockPos();
             IBlockState blockState = playerSP.world.getBlockState(blockPos);
             Block targetBlock = blockState.getBlock();
-            //if (targetBlock.canHarvestBlock(world, blockPos, playerSP)){return;}
+
+            //if(morphTool.canHarvestBlock(blockState)){return;}
 
             String toolClass = getHarvestTool(world, blockState, targetBlock, blockPos);
             if (toolClass == null){return;}
 
-            MorphingMultiTool.LOGGER.info("Tool name: " + toolClass);
 
             if (morphTool.getItem().getToolClasses(morphTool).contains(toolClass)){
-                MorphingMultiTool.LOGGER.info("Tool class & tool name the same");
+                //MorphingMultiTool.LOGGER.info("Tool class & tool name the same");
                 return;
             }
 
-
-/*          if (targetBlock instanceof IShearable){
-                toolName = new ItemStack(Items.SHEARS).getDisplayName().toLowerCase();
-            }*/
-
-/*            if (toolName == null){
-                MorphingMultiTool.LOGGER.warn("Tool Name was null");
-
-                NBTTagCompound tagStack = morphTool.getTagCompound();
-                if (tagStack == null || !tagStack.hasKey(MorphToolResources.TAG_MMT_DATA)){
-                    return;
-                }
-
-                NBTTagCompound tagMorphData = tagStack.getCompoundTag(MorphToolResources.TAG_MMT_DATA);
-                if (!tagMorphData.hasKey(MorphToolResources.TAG_MMT_TOOLS)){
-                    MorphingMultiTool.LOGGER.warn("Tool has Morph Data but not Tools Data! How?!");
-                }
-
-                NBTTagList tagToolsData = tagMorphData.getTagList(MorphToolResources.TAG_MMT_TOOLS, Constants.NBT.TAG_COMPOUND);
-                if (tagToolsData.isEmpty()){return;}
-
-                tagToolsData.getCompoundTagAt(0).setTag("Damage", new NBTTagShort((short) morphTool.getItemDamage()));
-
-                //TODO: Better name as it's morph tool but that's already defined in scope
-                ItemStack swapTool = new ItemStack(ModItems.MORPHING_MULTI_TOOL);
-
-                swapTool.setTagCompound(tagStack);
-                playerSP.setHeldItem(EnumHand.MAIN_HAND, swapTool);
-                return;
-            }*/
-
             NBTTagCompound tagStack = morphTool.getTagCompound();
             if (tagStack == null || !tagStack.hasKey(MorphToolResources.TAG_MMT_DATA)){
-                MorphingMultiTool.LOGGER.warn("No MMT_DATA?!");
+                //MorphingMultiTool.LOGGER.warn("No MMT_DATA?!");
                 return;}
 
-            MorphingMultiTool.LOGGER.info("Has MMT_DATA");
 
             NBTTagCompound tagMorphData = tagStack.getCompoundTag(MorphToolResources.TAG_MMT_DATA);
             if (tagMorphData.isEmpty()){return;}
@@ -142,47 +98,8 @@ public class ClientHandler {
                 return;
             }
 
-/*            ItemStack tool = MorphHandler.getItemFromToolClass(tagMorphData, toolClass);
-            if (tool.isEmpty()){return;}*/
-
             MorphHandler.updateToolDamage(morphTool);
-
-            MorphingMultiTool.LOGGER.info("Sends packet to server the server");
-
-            //tool.setTagCompound(tagStack);
-            //playerSP.setHeldItem(EnumHand.MAIN_HAND, tool);
             NetworkHandler.INSTANCE.sendToServer(new PacketMorphToTool(tagStack, toolClass));
-            //ItemStack tool = new ItemStack()
-
-
-            /*if (!tagMorphData.hasKey(MorphToolResources.TAG_MMT_TOOLS)){
-                MorphingMultiTool.LOGGER.warn("Tool has Morph Data but not Tools Data! How?!");
-                return;
-            }
-
-            MorphingMultiTool.LOGGER.info("Has MMT_TOOLS");
-
-            NBTTagList tagToolsData = tagMorphData.getTagList(MorphToolResources.TAG_MMT_TOOLS, Constants.NBT.TAG_COMPOUND);
-            if (tagToolsData.isEmpty()){return;}
-            MorphingMultiTool.LOGGER.info("MMT_Tools Not Empty");
-
-            //TODO: Remove NBTTagList toolClasses as it's redundant and requires making another NBTTagCompound
-            NBTTagList tagToolClasses = tagMorphData.getTagList(MorphToolResources.TAG_MMT_LIST_NBT_TOOL_CLASSES, Constants.NBT.TAG_STRING);
-            int toolPos = NBTHelper.tagListContainsString(tagToolClasses, toolName);
-            if (toolPos == -1){return;}
-
-            MorphingMultiTool.LOGGER.info(tagToolsData.getCompoundTagAt(0));
-            MorphingMultiTool.LOGGER.info(tagToolsData.getCompoundTagAt(0).hasKey("id", 8));
-            NBTTagCompound hold = tagToolsData.getCompoundTagAt(0);
-            Item test = Item.getByNameOrId(tagToolsData.getCompoundTagAt(0).getString("id"));
-            MorphingMultiTool.LOGGER.info(test);
-            ItemStack pickedTool = new ItemStack(hold);
-            MorphingMultiTool.LOGGER.info(pickedTool);
-            pickedTool.setTagCompound(tagStack);
-            MorphingMultiTool.LOGGER.info("Picked tool: " + pickedTool);
-            playerSP.setHeldItem(EnumHand.MAIN_HAND, pickedTool);
-            MorphingMultiTool.LOGGER.info("Tool name: " + toolName);*/
-
         }
     }
 
@@ -209,8 +126,6 @@ public class ClientHandler {
 
 
             if (!(invSlot instanceof SlotCrafting) && invSlot.isEnabled()){
-                //TODO: Network Shiz & removing tools
-
                 if (mouseStack.getItem() instanceof ItemMorphTool){
                     ItemStack slotStack = invSlot.getStack();
                     if (slotStack.isEmpty()){
@@ -219,8 +134,6 @@ public class ClientHandler {
                             NBTTagCompound morphData = mouseStack.getTagCompound().getCompoundTag(MorphToolResources.TAG_MMT_DATA);
                             if (morphData.isEmpty()){return;}
 
-                            //String toolClass = morphData.getKeySet().iterator().next();
-                            //NetworkHandler.INSTANCE.sendToServer(new PacketRemoveTool(mouseStack, toolClass, invSlot.slotNumber));
                             NetworkHandler.INSTANCE.sendToServer(new PacketRemoveTool(mouseStack, invSlot.slotNumber));
 
                             mouseEvent.setCanceled(true);
@@ -230,9 +143,6 @@ public class ClientHandler {
                     else{
                         Set<String> toolClass = slotStack.getItem().getToolClasses(slotStack);
                         if (toolClass.isEmpty()){return;}
-
-                        //TODO: Have it check every tool class not just the first
-                        //if (!MorphHandler.addTool(mouseStack, slotStack, toolClass.iterator().next())){return;}
 
                         NetworkHandler.INSTANCE.sendToServer(new PacketToolAdded(invSlot.slotNumber, mouseStack));
                         mouseEvent.setCanceled(true);
@@ -265,17 +175,10 @@ public class ClientHandler {
 
 
             }
-/*            ItemStack mouseStack = playerSP.inventory.getItemStack();
-            if (!mouseStack.isEmpty() && MorphHandler.isMorphingTool(mouseStack)){
-               ItemStack morphTool = new ItemStack(ModItems.MORPHING_MULTI_TOOL);
-               morphTool.setTagCompound(mouseStack.getTagCompound());
-               playerSP.inventory.setItemStack(morphTool);
-               //NetworkHandler.INSTANCE.sendToServer(new PacketUpdateMouseStack(morphTool));
-               done = true;
-            }*/
         }
     }
 
+    //TODO: If implemented should be done in morphHandler
 /*
     @SubscribeEvent
     public void onToolDrop(ItemTossEvent tossEvent){
@@ -315,9 +218,12 @@ public class ClientHandler {
         testTools.put(ToolType.AXE, new ItemStack(Items.WOODEN_AXE));
     }
 
+/*  modified version of McJty's showHarvestInfo method from theOneProbe:
+    https://github.com/McJtyMods/TheOneProbe/blob/1.12/src/main/java/mcjty/theoneprobe/apiimpl/providers/HarvestInfoTools.java#L75
+    McJty's comments were added on purpose because I thought they were funny (well last one is but require others for context)
+*/
     public static String getHarvestTool(World world, IBlockState blockState, Block block, BlockPos blockPos){
         String harvestTool = block.getHarvestTool(blockState);
-        //MorphingMultiTool.LOGGER.info("H tool Name: " + harvestTool);
         if (harvestTool != null){
             //TODO: Config option if should swap if tool harvest level >= block hardness
             return harvestTool;

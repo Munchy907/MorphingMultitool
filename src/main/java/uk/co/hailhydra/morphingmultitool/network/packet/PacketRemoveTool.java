@@ -18,27 +18,23 @@ public class PacketRemoveTool implements IMessage {
     public PacketRemoveTool(){}
 
     private ItemStack morphTool;
-    //private String toolClass;
     private int emptySlotID;
 
 
     public PacketRemoveTool(ItemStack morphTool, int emptySlotID){
         this.morphTool = morphTool;
-        //this.toolClass = toolClass;
         this.emptySlotID = emptySlotID;
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
         morphTool = ByteBufUtils.readItemStack(buf);
-        //toolClass = ByteBufUtils.readUTF8String(buf);
         emptySlotID = buf.readInt();
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
         ByteBufUtils.writeItemStack(buf, morphTool);
-        //ByteBufUtils.writeUTF8String(buf, toolClass);
         buf.writeInt(emptySlotID);
     }
 

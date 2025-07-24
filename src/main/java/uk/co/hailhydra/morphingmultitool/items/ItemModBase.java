@@ -19,7 +19,7 @@ public abstract class ItemModBase extends Item {
 
     @SideOnly(Side.CLIENT)
     public void initModel() {
-        MorphingMultiTool.LOGGER.info("Registry name: " + getRegistryName());
+        if (getRegistryName() == null){return;}
         ModelLoader.setCustomModelResourceLocation(this, 0, new ModelResourceLocation(getRegistryName(), "inventory"));
     }
 

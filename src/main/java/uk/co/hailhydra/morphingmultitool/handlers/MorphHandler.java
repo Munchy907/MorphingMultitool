@@ -10,7 +10,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.entity.player.PlayerDestroyItemEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
 import uk.co.hailhydra.morphingmultitool.init.ModItems;
 import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
 import uk.co.hailhydra.morphingmultitool.utility.NBTHelper;
@@ -19,13 +18,10 @@ public class MorphHandler {
 
     public static final MorphHandler INSTANCE = new MorphHandler();
 
-    private static final String[] tagToolDataKeys = {"id", "Count", "Damage"};
-
     private static final String TOOL_DATA_ID = "id";
     private static final String TOOL_DATA_COUNT = "Count";
     private static final String TOOL_DATA_DAMAGE = "Damage";
     private static final String TOOL_DATA_POSITION = "pos";
-    //private static final String TOOL_DATA_CLASS = "Class";
 
     //TODO: Fix minor bug where if adds to the first free slot and not the slot your currently using
     @SubscribeEvent
@@ -52,10 +48,7 @@ public class MorphHandler {
             return true;
         }
 
-        //Temp
         return isValidMorphStackNBT(stack.getTagCompound());
-        //return stack.getTagCompound() != null && stack.getTagCompound().hasKey(MorphToolResources.TAG_MMT_DATA);
-
     }
 
     public static NBTTagCompound createNBTData(ItemStack morphTool){
@@ -89,7 +82,6 @@ public class MorphHandler {
     public static boolean isValidMorphStackNBT(NBTTagCompound tagMorphStack){
         if (tagMorphStack.isEmpty() || !tagMorphStack.hasKey(MorphToolResources.TAG_MMT_DATA)){return false;}
 
-        MorphingMultiTool.LOGGER.info("Passes IsValidMorphStack");
         return isValidMorphDataNBT(tagMorphStack.getCompoundTag(MorphToolResources.TAG_MMT_DATA));
     }
 
@@ -129,9 +121,6 @@ public class MorphHandler {
         ResourceLocation toolResource = Item.REGISTRY.getNameForObject(toAddStack.getItem());
         if (toolResource == null){return false;}
 
-        //Don't know what this is/was for
-        //tagToolData.setTag("Slot", new NBTTagByte((byte) 0));
-
         NBTTagCompound tagToolData = createNBTToolData(toolResource.toString(), getNextPos(tagMorphData), (short) toAddStack.getItemDamage());
 
         tagMorphData.setTag(toolClass, tagToolData);
@@ -144,10 +133,8 @@ public class MorphHandler {
 
         tagToolData.setString(TOOL_DATA_ID, ID);
         tagToolData.setByte(TOOL_DATA_POSITION, pos);
-        //tagToolData.setString(TOOL_DATA_CLASS, toolClass);
         tagToolData.setByte(TOOL_DATA_COUNT, (byte) 1);
-        //if (damage <= 0){return tagToolData;}
-        tagToolData.setShort(TOOL_DATA_DAMAGE, (short) damage);
+        tagToolData.setShort(TOOL_DATA_DAMAGE, damage);
         return tagToolData;
     }
 
@@ -166,7 +153,6 @@ public class MorphHandler {
     public static ItemStack removeTool(ItemStack morphTool, String toolClass){
         if (!isMorphingTool(morphTool) || toolClass.isEmpty()){return new ItemStack(Items.AIR);}
 
-        assert morphTool.getTagCompound() != null;
         ItemStack tool = getItemFromToolClass(morphTool.getTagCompound().getCompoundTag(MorphToolResources.TAG_MMT_DATA), toolClass);
         if (tool.isEmpty()){return tool;}
 
@@ -177,7 +163,6 @@ public class MorphHandler {
     public static ItemStack removeTool(ItemStack morphTool){
         if (!isMorphingTool(morphTool)){return ItemStack.EMPTY;}
 
-        assert morphTool.getTagCompound() != null;
         NBTTagCompound tagMorphData = morphTool.getTagCompound().getCompoundTag(MorphToolResources.TAG_MMT_DATA);
 
         byte lastPos = -1;
