@@ -42,14 +42,6 @@ public class PacketUpdateMouseStack implements IMessage {
                     }
                 });
             }
-            else if (ctx.side.isServer()) {
-                EntityPlayerMP serverPlayer = ctx.getServerHandler().player;
-                serverPlayer.getServerWorld().addScheduledTask(() ->{
-                    if (MorphHandler.isMorphingTool(message.mouseStack)){
-                        serverPlayer.inventory.setItemStack(message.mouseStack);
-                    }
-                });
-            }
             return null;
         }
     }

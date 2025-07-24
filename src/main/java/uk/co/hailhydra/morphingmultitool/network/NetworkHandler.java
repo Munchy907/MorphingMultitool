@@ -20,7 +20,6 @@ public class NetworkHandler {
         INSTANCE.registerMessage(PacketToolAdded.PacketToolAddedHandler.class, PacketToolAdded.class, ID++, Side.SERVER);
         INSTANCE.registerMessage(PacketRemoveTool.PacketRemoveToolHandler.class, PacketRemoveTool.class, ID++, Side.SERVER);
         INSTANCE.registerMessage(PacketUpdateMouseStack.PacketUpdateMouseStackHandler.class, PacketUpdateMouseStack.class, ID++, Side.CLIENT);
-        INSTANCE.registerMessage(PacketUpdateMouseStack.PacketUpdateMouseStackHandler.class, PacketUpdateMouseStack.class, ID++, Side.SERVER);
     }
 
 }
