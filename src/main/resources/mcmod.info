@@ -6,7 +6,7 @@
     "mcversion": "${mcversion}",
     "logoFile": "",
     "url": "",
-    "authorList": [],
-    "credits": "",
+    "authorList": ["Zumbio"],
+    "credits": "Vazkii for making Morph-o-Tool, which inspired me to make this & McJty for his showHarvestTool method, which helped a lot in understanding blocks & how they work with tool classes",
     "dependencies": []
 }]
