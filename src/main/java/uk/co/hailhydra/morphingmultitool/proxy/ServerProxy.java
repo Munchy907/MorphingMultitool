@@ -2,15 +2,15 @@ package uk.co.hailhydra.morphingmultitool.proxy;
 
 public class ServerProxy extends CommonProxy {
 
-    ServerProxy(){}
+    public ServerProxy(){}
 
     @Override
     public void preInit() {
         super.preInit();
     }
 
-/*    @Override
+    @Override
     public void init() {
-
-    }*/
+        super.init();
+    }
 }

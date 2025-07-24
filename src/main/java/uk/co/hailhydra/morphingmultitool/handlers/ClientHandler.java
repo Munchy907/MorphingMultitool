@@ -5,6 +5,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.gui.inventory.GuiContainerCreative;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
@@ -14,11 +15,13 @@ import net.minecraft.inventory.SlotCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemTool;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.GuiScreenEvent;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.player.PlayerDropsEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -27,15 +30,13 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
 import uk.co.hailhydra.morphingmultitool.init.ModItems;
 import uk.co.hailhydra.morphingmultitool.items.ItemMorphTool;
 import uk.co.hailhydra.morphingmultitool.network.NetworkHandler;
-import uk.co.hailhydra.morphingmultitool.network.packet.PacketMorphToTool;
-import uk.co.hailhydra.morphingmultitool.network.packet.PacketRemoveTool;
-import uk.co.hailhydra.morphingmultitool.network.packet.PacketToolAdded;
-import uk.co.hailhydra.morphingmultitool.network.packet.PacketUpdateMouseStack;
+import uk.co.hailhydra.morphingmultitool.network.packet.*;
 import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
 import uk.co.hailhydra.morphingmultitool.utility.MouseInputType;
 import uk.co.hailhydra.morphingmultitool.utility.ToolType;
@@ -85,13 +86,16 @@ public class ClientHandler {
             Block targetBlock = blockState.getBlock();
             //if (targetBlock.canHarvestBlock(world, blockPos, playerSP)){return;}
 
-            String toolName = getHarvestTool(world, blockState, targetBlock, blockPos);
-            if (toolName == null){return;}
+            String toolClass = getHarvestTool(world, blockState, targetBlock, blockPos);
+            if (toolClass == null){return;}
 
-            if (morphTool.getItem().getToolClasses(morphTool).contains(toolName)){
+            MorphingMultiTool.LOGGER.info("Tool name: " + toolClass);
+
+            if (morphTool.getItem().getToolClasses(morphTool).contains(toolClass)){
                 MorphingMultiTool.LOGGER.info("Tool class & tool name the same");
                 return;
             }
+
 
 /*          if (targetBlock instanceof IShearable){
                 toolName = new ItemStack(Items.SHEARS).getDisplayName().toLowerCase();
@@ -134,14 +138,20 @@ public class ClientHandler {
             if (tagMorphData.isEmpty()){return;}
 
 
-            ItemStack tool = MorphHandler.getItemFromToolClass(tagMorphData, toolName);
-            if (tool.isEmpty()){return;}
+            if (!tagMorphData.hasKey(toolClass)){
+                return;
+            }
+
+/*            ItemStack tool = MorphHandler.getItemFromToolClass(tagMorphData, toolClass);
+            if (tool.isEmpty()){return;}*/
+
+            MorphHandler.updateToolDamage(morphTool);
 
             MorphingMultiTool.LOGGER.info("Sends packet to server the server");
 
             //tool.setTagCompound(tagStack);
             //playerSP.setHeldItem(EnumHand.MAIN_HAND, tool);
-            NetworkHandler.INSTANCE.sendToServer(new PacketMorphToTool(tagStack, toolName));
+            NetworkHandler.INSTANCE.sendToServer(new PacketMorphToTool(tagStack, toolClass));
             //ItemStack tool = new ItemStack()
 
 
@@ -233,17 +243,36 @@ public class ClientHandler {
 
         }
     }
+
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void onItemMousePickup(GuiScreenEvent.MouseInputEvent.Post mouseEvent){
-        if (!mouseEvent.isCanceled() && mouseEvent.getGui() instanceof GuiContainer guiContainer && Mouse.getEventButton() == MouseInputType.LEFT){
+    public void onItemMousePickup(GuiScreenEvent.MouseInputEvent.Pre mouseEvent){
+        if (!mouseEvent.isCanceled() && mouseEvent.getGui() instanceof GuiContainer guiContainer && (Mouse.getEventButton() == MouseInputType.LEFT || Mouse.getEventButton() == MouseInputType.RIGHT)){
+
             EntityPlayerSP playerSP = Minecraft.getMinecraft().player;
-            ItemStack mouseStack = playerSP.inventory.getItemStack();
+            if (!playerSP.inventory.getItemStack().isEmpty()){return;}
+
+            if (guiContainer.getSlotUnderMouse() != null){
+                Slot slot = guiContainer.getSlotUnderMouse();
+                ItemStack slotStack = slot.getStack().copy();
+                if (MorphHandler.isMorphingTool(slotStack) && !(slotStack.getItem() instanceof ItemMorphTool)){
+                    MorphHandler.updateToolDamage(slotStack);
+                    ItemStack morphTool = new ItemStack(ModItems.MORPHING_MULTI_TOOL);
+                    morphTool.setTagCompound(slotStack.getTagCompound());
+                    slot.putStack(morphTool);
+                    int slotID = (guiContainer instanceof GuiContainerCreative) ? slot.getSlotIndex() : slot.slotNumber;
+                    NetworkHandler.INSTANCE.sendToServer(new PacketMorphOnMousePickup(slotID));
+                }
+
+
+            }
+/*            ItemStack mouseStack = playerSP.inventory.getItemStack();
             if (!mouseStack.isEmpty() && MorphHandler.isMorphingTool(mouseStack)){
                ItemStack morphTool = new ItemStack(ModItems.MORPHING_MULTI_TOOL);
                morphTool.setTagCompound(mouseStack.getTagCompound());
                playerSP.inventory.setItemStack(morphTool);
-               NetworkHandler.INSTANCE.sendToServer(new PacketUpdateMouseStack(morphTool));
-            }
+               //NetworkHandler.INSTANCE.sendToServer(new PacketUpdateMouseStack(morphTool));
+               done = true;
+            }*/
         }
     }
 
@@ -288,7 +317,7 @@ public class ClientHandler {
 
     public static String getHarvestTool(World world, IBlockState blockState, Block block, BlockPos blockPos){
         String harvestTool = block.getHarvestTool(blockState);
-        MorphingMultiTool.LOGGER.info("H tool Name: " + harvestTool);
+        //MorphingMultiTool.LOGGER.info("H tool Name: " + harvestTool);
         if (harvestTool != null){
             //TODO: Config option if should swap if tool harvest level >= block hardness
             return harvestTool;

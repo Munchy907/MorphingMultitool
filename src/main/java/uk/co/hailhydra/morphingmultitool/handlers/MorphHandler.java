@@ -1,17 +1,23 @@
 package uk.co.hailhydra.morphingmultitool.handlers;
 
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.event.entity.player.PlayerDestroyItemEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
 import uk.co.hailhydra.morphingmultitool.init.ModItems;
 import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
 import uk.co.hailhydra.morphingmultitool.utility.NBTHelper;
 
 public class MorphHandler {
+
+    public static final MorphHandler INSTANCE = new MorphHandler();
 
     private static final String[] tagToolDataKeys = {"id", "Count", "Damage"};
 
@@ -20,6 +26,24 @@ public class MorphHandler {
     private static final String TOOL_DATA_DAMAGE = "Damage";
     private static final String TOOL_DATA_POSITION = "pos";
     //private static final String TOOL_DATA_CLASS = "Class";
+
+    //TODO: Fix minor bug where if adds to the first free slot and not the slot your currently using
+    @SubscribeEvent
+    public void onItemBreaks(PlayerDestroyItemEvent event){
+        if (event.getHand() == null || !MorphHandler.isMorphingTool(event.getOriginal())
+                || event.getOriginal().getItem().getToolClasses(event.getOriginal()).isEmpty()) {return;}
+
+        EntityPlayer entityPlayer = event.getEntityPlayer();
+        ItemStack brokeTool = event.getOriginal();
+        removeTool(brokeTool, brokeTool.getItem().getToolClasses(event.getOriginal()).iterator().next());
+
+        if (!entityPlayer.getEntityWorld().isRemote){
+            ItemStack morphTool = new ItemStack(ModItems.MORPHING_MULTI_TOOL);
+            morphTool.setTagCompound(brokeTool.getTagCompound());
+            entityPlayer.getEntityWorld().spawnEntity(new EntityItem(entityPlayer.world, entityPlayer.posX,
+                    entityPlayer.posY, entityPlayer.posZ, morphTool));
+        }
+    }
 
     public static Boolean isMorphingTool(ItemStack stack){
         if (stack.isEmpty() || stack.getTagCompound() == null){return false;}
@@ -85,8 +109,8 @@ public class MorphHandler {
     private static boolean isValidToolDataNBT(NBTTagCompound tagToolData){
         if (!tagToolData.hasKey(TOOL_DATA_ID, Constants.NBT.TAG_STRING)){return false;}
         else if (!tagToolData.hasKey(TOOL_DATA_POSITION, Constants.NBT.TAG_BYTE)){return false;}
-        else return tagToolData.hasKey(TOOL_DATA_COUNT, Constants.NBT.TAG_BYTE);
-        //else return tagToolData.hasKey(tagToolDataKeys[2], Constants.NBT.TAG_SHORT);
+        else if (!tagToolData.hasKey(TOOL_DATA_COUNT, Constants.NBT.TAG_BYTE)){return false;}
+        else return tagToolData.hasKey(TOOL_DATA_DAMAGE, Constants.NBT.TAG_SHORT);
     }
 
     public static boolean addTool(ItemStack morphTool, ItemStack toAddStack, String toolClass){
@@ -122,8 +146,7 @@ public class MorphHandler {
         tagToolData.setByte(TOOL_DATA_POSITION, pos);
         //tagToolData.setString(TOOL_DATA_CLASS, toolClass);
         tagToolData.setByte(TOOL_DATA_COUNT, (byte) 1);
-        if (damage <= 0){return tagToolData;}
-
+        //if (damage <= 0){return tagToolData;}
         tagToolData.setShort(TOOL_DATA_DAMAGE, (short) damage);
         return tagToolData;
     }
@@ -171,6 +194,19 @@ public class MorphHandler {
 
         if (toolClass.isEmpty()){return ItemStack.EMPTY;}
         else return removeTool(morphTool, toolClass);
+    }
+
+    public static void updateToolDamage(ItemStack tool){
+        if (isMorphingTool(tool)){
+            NBTTagCompound tagMorphData = tool.getTagCompound().getCompoundTag(MorphToolResources.TAG_MMT_DATA);
+            if (!tool.getItem().getToolClasses(tool).isEmpty()){
+                String toolClass = tool.getItem().getToolClasses(tool).iterator().next();
+                if (tagMorphData.hasKey(toolClass, Constants.NBT.TAG_COMPOUND)){
+                    NBTTagCompound tagToolData = tagMorphData.getCompoundTag(toolClass);
+                    tagToolData.setShort(MorphHandler.TOOL_DATA_DAMAGE, (short) tool.getItemDamage());
+                }
+            }
+        }
     }
 
 
