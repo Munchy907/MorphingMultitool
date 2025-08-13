@@ -11,6 +11,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.Slot;
 import net.minecraft.inventory.SlotCrafting;
+import net.minecraft.item.ItemShears;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemTool;
 import net.minecraft.nbt.NBTTagCompound;
@@ -19,12 +20,14 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.GuiScreenEvent;
+import net.minecraftforge.common.IShearable;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Mouse;
+import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
 import uk.co.hailhydra.morphingmultitool.init.ModItems;
 import uk.co.hailhydra.morphingmultitool.items.ItemMorphTool;
 import uk.co.hailhydra.morphingmultitool.network.NetworkHandler;
@@ -76,6 +79,7 @@ public class ClientHandler {
             //if(morphTool.canHarvestBlock(blockState)){return;}
 
             String toolClass = getHarvestTool(world, blockState, targetBlock, blockPos);
+            if (toolClass == null && targetBlock instanceof IShearable){toolClass = ToolType.SHEARS;}
             if (toolClass == null){return;}
 
 
@@ -141,8 +145,8 @@ public class ClientHandler {
                         }
                     }
                     else{
-                        Set<String> toolClass = slotStack.getItem().getToolClasses(slotStack);
-                        if (toolClass.isEmpty()){return;}
+                        Set<String> toolClasses = slotStack.getItem().getToolClasses(slotStack);
+                        if (toolClasses.isEmpty() && !(slotStack.getItem() instanceof ItemShears)){return;}
 
                         NetworkHandler.INSTANCE.sendToServer(new PacketToolAdded(invSlot.slotNumber, mouseStack));
                         mouseEvent.setCanceled(true);
@@ -220,7 +224,7 @@ public class ClientHandler {
 
 /*  modified version of McJty's showHarvestInfo method from theOneProbe:
     https://github.com/McJtyMods/TheOneProbe/blob/1.12/src/main/java/mcjty/theoneprobe/apiimpl/providers/HarvestInfoTools.java#L75
-    McJty's comments were added on purpose because I thought they were funny (well last one is but require others for context)
+    McJty's comments were added on purpose because I thought they were funny (well last one, but require others for context)
 */
     public static String getHarvestTool(World world, IBlockState blockState, Block block, BlockPos blockPos){
         String harvestTool = block.getHarvestTool(blockState);
@@ -245,6 +249,8 @@ public class ClientHandler {
                 }
             }
         }
+        if (blockState instanceof IShearable){
+            return ToolType.SHEARS;}
 
         return null;
     }

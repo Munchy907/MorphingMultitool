@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
+import net.minecraft.item.ItemShears;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
@@ -12,6 +13,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import uk.co.hailhydra.morphingmultitool.handlers.MorphHandler;
 import uk.co.hailhydra.morphingmultitool.items.ItemMorphTool;
 import uk.co.hailhydra.morphingmultitool.network.NetworkHandler;
+import uk.co.hailhydra.morphingmultitool.utility.ToolType;
 
 import java.util.Set;
 
@@ -55,9 +57,16 @@ public class PacketToolAdded implements IMessage {
 
                     if (morphTool.getItem() instanceof ItemMorphTool || MorphHandler.isMorphingTool(morphTool)){
                         Set<String> toolClasses = toolToAdd.getItem().getToolClasses(toolToAdd);
-                        if (toolClasses.isEmpty()){return;}
+                        String toolClass = "";
+                        if (toolClasses.isEmpty()) {
+                            if (!(toolToAdd.getItem() instanceof ItemShears)) {
+                                return;
+                            } else {
+                                toolClass = ToolType.SHEARS;
+                            }
+                        }else {toolClass = toolToAdd.getItem().getToolClasses(toolToAdd).iterator().next();}
 
-                        if (!MorphHandler.addTool(morphTool, toolToAdd, toolToAdd.getItem().getToolClasses(toolToAdd).iterator().next())){return;}
+                        if (!MorphHandler.addTool(morphTool, toolToAdd, toolClass)){return;}
 
                         serverPlayer.inventory.setItemStack(morphTool);
                         NetworkHandler.INSTANCE.sendTo(new PacketUpdateMouseStack(morphTool), serverPlayer) ;
