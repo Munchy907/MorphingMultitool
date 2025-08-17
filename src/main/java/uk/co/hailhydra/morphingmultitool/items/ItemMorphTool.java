@@ -6,11 +6,15 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
+import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
 import uk.co.hailhydra.morphingmultitool.handlers.MorphHandler;
 import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
 import uk.co.hailhydra.morphingmultitool.utility.TooltipHelper;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ItemMorphTool extends ItemModBase {
     public ItemMorphTool() {
@@ -33,14 +37,18 @@ public class ItemMorphTool extends ItemModBase {
             {return;}
 
         if (tooltip.isEmpty()){return;}
-        if (tooltip.size() > 1){
-            String itemName = tooltip.get(0);
-            tooltip.clear();
-            tooltip.add(itemName);
-        }
 
         TooltipHelper.tooltipOnShift(tooltip, () -> {
-            for (String toolClass: tagMorphData.getKeySet()) {
+            List<String> morphDataKeys = tagMorphData.getKeySet().stream()
+                    .sorted((key1, key2) -> {
+                        //TODO: Either move tool data to own class or make it public in morphing handler
+                        int pos1 = tagMorphData.getCompoundTag(key1).getByte("pos");
+                        int pos2 = tagMorphData.getCompoundTag(key2).getByte("pos");
+                        return Integer.compare(pos1, pos2);
+                    })
+                    .collect(Collectors.toList());
+
+            for (String toolClass: morphDataKeys) {
                 //TODO: Replace hacky substring method of capitalizing first letter of tool class, with a utility method that capitalizes the first letter & every letter starting after a space
                 tooltip.add(toolClass.substring(0,1).toUpperCase() + toolClass.substring(1) + ": " + new ItemStack(tagMorphData.getCompoundTag(toolClass)).getDisplayName());
             }
