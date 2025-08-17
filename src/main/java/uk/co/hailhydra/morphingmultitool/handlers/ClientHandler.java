@@ -27,7 +27,6 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Mouse;
-import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
 import uk.co.hailhydra.morphingmultitool.init.ModItems;
 import uk.co.hailhydra.morphingmultitool.items.ItemMorphTool;
 import uk.co.hailhydra.morphingmultitool.network.NetworkHandler;
@@ -182,28 +181,6 @@ public class ClientHandler {
         }
     }
 
-    //TODO: If implemented should be done in morphHandler
-/*
-    @SubscribeEvent
-    public void onToolDrop(ItemTossEvent tossEvent){
-        if (tossEvent.getPlayer().isSneaking()){
-
-            ItemStack tool = tossEvent.getEntityItem().getItem();
-            if (MorphHandler.isMorphingTool(tool) && !(tool.getItem() instanceof ItemMorphTool)){
-                EntityItem droppedItem = tossEvent.getEntityItem();
-                if (droppedItem.getEntityWorld().isRemote){
-                    MorphingMultiTool.LOGGER.info("is Remote, what we doing chef?");
-                    droppedItem.setItem(MorphHandler.removeTool(tool, tool.getItem().getToolClasses(tool).iterator().next()));
-                }else {
-                    MorphingMultiTool.LOGGER.info("Not Remote, what we doing chef?");
-                    EntityItem newItem = new EntityItem(tossEvent.getEntityItem().getEntityWorld(), droppedItem.posX, droppedItem.posY, droppedItem.posZ, MorphHandler.removeTool(tool, tool.getItem().getToolClasses(tool).iterator().next()));
-                    droppedItem.getEntityWorld().spawnEntity(newItem);
-                }
-            }
-        }
-
-    }*/
-
     public static RayTraceResult raycast(Entity entity, double rayLength){
         Vec3d startVec = new Vec3d(entity.posX, entity.posY, entity.posZ);
         if (entity instanceof EntityPlayer){startVec = startVec.add(0, entity.getEyeHeight(), 0);}
@@ -226,6 +203,7 @@ public class ClientHandler {
     https://github.com/McJtyMods/TheOneProbe/blob/1.12/src/main/java/mcjty/theoneprobe/apiimpl/providers/HarvestInfoTools.java#L75
     McJty's comments were added on purpose because I thought they were funny (well last one, but require others for context)
 */
+    //TODO swap from using wood tools, and test with the in the multi-tool
     public static String getHarvestTool(World world, IBlockState blockState, Block block, BlockPos blockPos){
         String harvestTool = block.getHarvestTool(blockState);
         if (harvestTool != null){

@@ -2,3 +2,5 @@
 item.morphingmultitool.tool.name=Morphing Multi-Tool
 #Creative Tab
 itemGroup.morphingmultitool=Morphing Multi-Tool
+#Tooltip
+util.morphingmultitool.shiftForInfo=&7Hold &bSHIFT&7 for more info

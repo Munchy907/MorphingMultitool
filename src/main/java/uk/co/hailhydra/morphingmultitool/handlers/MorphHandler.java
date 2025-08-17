@@ -1,5 +1,6 @@
 package uk.co.hailhydra.morphingmultitool.handlers;
 
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
@@ -8,11 +9,15 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.player.PlayerDestroyItemEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import uk.co.hailhydra.morphingmultitool.init.ModItems;
+import uk.co.hailhydra.morphingmultitool.items.ItemMorphTool;
 import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
 import uk.co.hailhydra.morphingmultitool.utility.NBTHelper;
+
+import java.util.List;
 
 public class MorphHandler {
 
@@ -38,6 +43,18 @@ public class MorphHandler {
             morphTool.setTagCompound(brokeTool.getTagCompound());
             entityPlayer.getEntityWorld().spawnEntity(new EntityItem(entityPlayer.world, entityPlayer.posX,
                     entityPlayer.posY, entityPlayer.posZ, morphTool));
+        }
+    }
+
+    //TODO: If implemented should be done in morphHandler
+    @SubscribeEvent
+    public void onToolDrop(ItemTossEvent tossEvent){
+        ItemStack tool = tossEvent.getEntityItem().getItem();
+        if (MorphHandler.isMorphingTool(tool) && !(tool.getItem() instanceof ItemMorphTool)){
+            EntityItem droppedItem = tossEvent.getEntityItem();
+            ItemStack morphTool = new ItemStack(ModItems.MORPHING_MULTI_TOOL);
+            morphTool.setTagCompound(tool.getTagCompound());
+            droppedItem.setItem(morphTool);
         }
     }
 
