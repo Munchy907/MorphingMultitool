@@ -1,6 +1,5 @@
 package uk.co.hailhydra.morphingmultitool.handlers;
 
-import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
@@ -16,8 +15,6 @@ import uk.co.hailhydra.morphingmultitool.init.ModItems;
 import uk.co.hailhydra.morphingmultitool.items.ItemMorphTool;
 import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
 import uk.co.hailhydra.morphingmultitool.utility.NBTHelper;
-
-import java.util.List;
 
 public class MorphHandler {
 

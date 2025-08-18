@@ -49,61 +49,49 @@ public class ClientHandler {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onClientTick(TickEvent.ClientTickEvent event) {
-        tickCounter += 1;
 
-        //TODO Remove tick counter on release
-        if (event.phase == TickEvent.Phase.END && tickCounter >= 40){
-            tickCounter = 0;
-            EntityPlayerSP playerSP = Minecraft.getMinecraft().player;
-            if (Minecraft.getMinecraft().isGamePaused() || Minecraft.getMinecraft().currentScreen != null || playerSP == null || playerSP.world == null){return;}
-            World world = playerSP.world;
+        EntityPlayerSP playerSP = Minecraft.getMinecraft().player;
+        if (Minecraft.getMinecraft().isGamePaused() || Minecraft.getMinecraft().currentScreen != null || playerSP == null || playerSP.world == null){return;}
+        World world = playerSP.world;
 
-            if (!MorphHandler.isMorphingTool(playerSP.getHeldItemMainhand())){return;}
+        if (!MorphHandler.isMorphingTool(playerSP.getHeldItemMainhand())){return;}
 
-            ItemStack morphTool = playerSP.getHeldItemMainhand();
+        ItemStack morphTool = playerSP.getHeldItemMainhand();
 
-/*          Note: Minecraft method is bugged, doesn't change based on if player is in creative or not.
-            It will always return 5.0 (creative reach distance), even when it should be 4.5 (survival reach distance)
-            playerSP.getEntityAttribute(EntityPlayer.REACH_DISTANCE).getAttributeValue();*/
-            double rayLength = (playerSP.isCreative()) ? INTERACTION_RANGE_CREATIVE : INTERACTION_RANGE_SURVIVAL;
+        double rayLength = (playerSP.isCreative()) ? INTERACTION_RANGE_CREATIVE : INTERACTION_RANGE_SURVIVAL;
 
-            RayTraceResult rayResult = raycast(playerSP, rayLength);
+        RayTraceResult rayResult = raycast(playerSP, rayLength);
 
-            if (rayResult == null || rayResult.typeOfHit != RayTraceResult.Type.BLOCK){return;}
+        if (rayResult == null || rayResult.typeOfHit != RayTraceResult.Type.BLOCK){return;}
 
-            BlockPos blockPos = rayResult.getBlockPos();
-            IBlockState blockState = playerSP.world.getBlockState(blockPos);
-            Block targetBlock = blockState.getBlock();
+        BlockPos blockPos = rayResult.getBlockPos();
+        IBlockState blockState = playerSP.world.getBlockState(blockPos);
+        Block targetBlock = blockState.getBlock();
 
-            //if(morphTool.canHarvestBlock(blockState)){return;}
-
-            String toolClass = getHarvestTool(world, blockState, targetBlock, blockPos);
-            if (toolClass == null && targetBlock instanceof IShearable){toolClass = ToolType.SHEARS;}
-            if (toolClass == null){return;}
+        String toolClass = getHarvestTool(world, blockState, targetBlock, blockPos);
+        if (toolClass == null && targetBlock instanceof IShearable){toolClass = ToolType.SHEARS;}
+        if (toolClass == null){return;}
 
 
-            if (morphTool.getItem().getToolClasses(morphTool).contains(toolClass)){
-                //MorphingMultiTool.LOGGER.info("Tool class & tool name the same");
+        if (morphTool.getItem().getToolClasses(morphTool).contains(toolClass)){
                 return;
-            }
-
-            NBTTagCompound tagStack = morphTool.getTagCompound();
-            if (tagStack == null || !tagStack.hasKey(MorphToolResources.TAG_MMT_DATA)){
-                //MorphingMultiTool.LOGGER.warn("No MMT_DATA?!");
-                return;}
-
-
-            NBTTagCompound tagMorphData = tagStack.getCompoundTag(MorphToolResources.TAG_MMT_DATA);
-            if (tagMorphData.isEmpty()){return;}
-
-
-            if (!tagMorphData.hasKey(toolClass)){
-                return;
-            }
-
-            MorphHandler.updateToolDamage(morphTool);
-            NetworkHandler.INSTANCE.sendToServer(new PacketMorphToTool(tagStack, toolClass));
         }
+
+        NBTTagCompound tagStack = morphTool.getTagCompound();
+        if (tagStack == null || !tagStack.hasKey(MorphToolResources.TAG_MMT_DATA)){
+            return;}
+
+
+        NBTTagCompound tagMorphData = tagStack.getCompoundTag(MorphToolResources.TAG_MMT_DATA);
+        if (tagMorphData.isEmpty()){return;}
+
+
+        if (!tagMorphData.hasKey(toolClass)){
+                return;
+        }
+
+        MorphHandler.updateToolDamage(morphTool);
+        NetworkHandler.INSTANCE.sendToServer(new PacketMorphToTool(tagStack, toolClass));
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)

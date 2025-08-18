@@ -6,14 +6,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
-import uk.co.hailhydra.morphingmultitool.MorphingMultiTool;
 import uk.co.hailhydra.morphingmultitool.handlers.MorphHandler;
 import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
 import uk.co.hailhydra.morphingmultitool.utility.TooltipHelper;
 
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ItemMorphTool extends ItemModBase {
@@ -53,7 +50,5 @@ public class ItemMorphTool extends ItemModBase {
                 tooltip.add(toolClass.substring(0,1).toUpperCase() + toolClass.substring(1) + ": " + new ItemStack(tagMorphData.getCompoundTag(toolClass)).getDisplayName());
             }
         });
-
-        //super.addInformation(stack, worldIn, tooltip, flagIn);
     }
 }
