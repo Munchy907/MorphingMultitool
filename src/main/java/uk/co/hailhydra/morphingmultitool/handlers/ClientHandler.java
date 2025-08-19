@@ -58,6 +58,14 @@ public class ClientHandler {
 
         ItemStack morphTool = playerSP.getHeldItemMainhand();
 
+        NBTTagCompound tagStack = morphTool.getTagCompound();
+        if (tagStack == null || !tagStack.hasKey(MorphToolResources.TAG_MMT_DATA)){
+            return;}
+
+
+        NBTTagCompound tagMorphData = tagStack.getCompoundTag(MorphToolResources.TAG_MMT_DATA);
+        if (tagMorphData.isEmpty()){return;}
+
         double rayLength = (playerSP.isCreative()) ? INTERACTION_RANGE_CREATIVE : INTERACTION_RANGE_SURVIVAL;
 
         RayTraceResult rayResult = raycast(playerSP, rayLength);
@@ -68,23 +76,13 @@ public class ClientHandler {
         IBlockState blockState = playerSP.world.getBlockState(blockPos);
         Block targetBlock = blockState.getBlock();
 
-        String toolClass = getHarvestTool(world, blockState, targetBlock, blockPos);
-        if (toolClass == null && targetBlock instanceof IShearable){toolClass = ToolType.SHEARS;}
+        String toolClass = getMorphHarvestTool(world, blockState, targetBlock, blockPos, tagMorphData);//getHarvestTool(world, blockState, targetBlock, blockPos);
+        //if (toolClass == null && targetBlock instanceof IShearable){toolClass = ToolType.SHEARS;}
         if (toolClass == null){return;}
-
 
         if (morphTool.getItem().getToolClasses(morphTool).contains(toolClass)){
                 return;
         }
-
-        NBTTagCompound tagStack = morphTool.getTagCompound();
-        if (tagStack == null || !tagStack.hasKey(MorphToolResources.TAG_MMT_DATA)){
-            return;}
-
-
-        NBTTagCompound tagMorphData = tagStack.getCompoundTag(MorphToolResources.TAG_MMT_DATA);
-        if (tagMorphData.isEmpty()){return;}
-
 
         if (!tagMorphData.hasKey(toolClass)){
                 return;
@@ -180,44 +178,35 @@ public class ClientHandler {
         return entity.world.rayTraceBlocks(startVec, endVec);
     }
 
-    private static final Map<String, ItemStack> testTools = new HashMap<>();
-    static {
-        testTools.put(ToolType.SHOVEL, new ItemStack(Items.WOODEN_SHOVEL));
-        testTools.put(ToolType.PICKAXE, new ItemStack(Items.WOODEN_PICKAXE));
-        testTools.put(ToolType.AXE, new ItemStack(Items.WOODEN_AXE));
-    }
-
 /*  modified version of McJty's showHarvestInfo method from theOneProbe:
     https://github.com/McJtyMods/TheOneProbe/blob/1.12/src/main/java/mcjty/theoneprobe/apiimpl/providers/HarvestInfoTools.java#L75
-    McJty's comments were added on purpose because I thought they were funny (well last one, but require others for context)
 */
-    //TODO swap from using wood tools, and test with the in the multi-tool
-    public static String getHarvestTool(World world, IBlockState blockState, Block block, BlockPos blockPos){
+    public static String getMorphHarvestTool(World world, IBlockState blockState, Block block, BlockPos blockPos, NBTTagCompound tagMorphData){
         String harvestTool = block.getHarvestTool(blockState);
         if (harvestTool != null){
             //TODO: Config option if should swap if tool harvest level >= block hardness
             return harvestTool;
         }
 
-        // The block doesn't have an explicitly-set harvest tool, so we're going to test our wooden tools against the block.
+        // The block doesn't have an explicitly-set harvest tool, so we're going to test the tools inside the morphing multi-tool against the block.
         float blockHardness = blockState.getBlockHardness(world, blockPos);
         if (blockHardness >= 0f){
-            for (Map.Entry<String, ItemStack> testToolEntry : testTools.entrySet()){
-                // loop through our test tools until we find a winner.
-                ItemStack testTool = testToolEntry.getValue();
+            boolean isShearable = (block instanceof IShearable);
 
-                if (testTool != null && testTool.getItem() instanceof ItemTool toolItem){
+            for (String toolClass: MorphHandler.getOrderedToolClasses(tagMorphData)){
+                if (isShearable && toolClass.equals(ToolType.SHEARS))
+                {return toolClass;}
+
+                ItemStack testTool = new ItemStack(tagMorphData.getCompoundTag(toolClass));
+
+                if (!testTool.isEmpty() && testTool.getItem() instanceof ItemTool toolItem){
                     if (testTool.getDestroySpeed(blockState) >= toolItem.toolMaterial.getEfficiency()){
-                        //BINGO
-                        harvestTool = testToolEntry.getKey();
+                        harvestTool = toolClass;
                         return harvestTool;
                     }
                 }
             }
         }
-        if (blockState instanceof IShearable){
-            return ToolType.SHEARS;}
-
         return null;
     }
 

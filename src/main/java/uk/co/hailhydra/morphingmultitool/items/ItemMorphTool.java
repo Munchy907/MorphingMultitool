@@ -36,16 +36,7 @@ public class ItemMorphTool extends ItemModBase {
         if (tooltip.isEmpty()){return;}
 
         TooltipHelper.tooltipOnShift(tooltip, () -> {
-            List<String> morphDataKeys = tagMorphData.getKeySet().stream()
-                    .sorted((key1, key2) -> {
-                        //TODO: Either move tool data to own class or make it public in morphing handler
-                        int pos1 = tagMorphData.getCompoundTag(key1).getByte("pos");
-                        int pos2 = tagMorphData.getCompoundTag(key2).getByte("pos");
-                        return Integer.compare(pos1, pos2);
-                    })
-                    .collect(Collectors.toList());
-
-            for (String toolClass: morphDataKeys) {
+            for (String toolClass: MorphHandler.getOrderedToolClasses(tagMorphData)) {
                 //TODO: Replace hacky substring method of capitalizing first letter of tool class, with a utility method that capitalizes the first letter & every letter starting after a space
                 tooltip.add(toolClass.substring(0,1).toUpperCase() + toolClass.substring(1) + ": " + new ItemStack(tagMorphData.getCompoundTag(toolClass)).getDisplayName());
             }

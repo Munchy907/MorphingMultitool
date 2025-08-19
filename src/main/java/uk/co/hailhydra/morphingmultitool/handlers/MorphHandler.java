@@ -16,6 +16,10 @@ import uk.co.hailhydra.morphingmultitool.items.ItemMorphTool;
 import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
 import uk.co.hailhydra.morphingmultitool.utility.NBTHelper;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class MorphHandler {
 
     public static final MorphHandler INSTANCE = new MorphHandler();
@@ -206,6 +210,19 @@ public class MorphHandler {
                 }
             }
         }
+    }
+
+    public static List<String> getOrderedToolClasses(NBTTagCompound tagMorphData){
+        if (isValidMorphDataNBT(tagMorphData)){
+            return tagMorphData.getKeySet().stream()
+                    .sorted((key1, key2) -> {
+                        int pos1 = tagMorphData.getCompoundTag(key1).getByte(TOOL_DATA_POSITION);
+                        int pos2 = tagMorphData.getCompoundTag(key2).getByte(TOOL_DATA_POSITION);
+                        return Integer.compare(pos1, pos2);
+                    })
+                    .collect(Collectors.toList());
+        }
+        return new ArrayList<>();
     }
 
 
