@@ -35,8 +35,6 @@ import uk.co.hailhydra.morphingmultitool.utility.MorphToolResources;
 import uk.co.hailhydra.morphingmultitool.utility.MouseInputType;
 import uk.co.hailhydra.morphingmultitool.utility.ToolType;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 @SideOnly(Side.CLIENT)
